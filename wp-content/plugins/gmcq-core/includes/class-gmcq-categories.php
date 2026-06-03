@@ -34,15 +34,20 @@ function gmcq_create_category( array $data ) {
 		return $validation;
 	}
 
+	$parent_id = ! empty( $data['parent_id'] ) ? (int) $data['parent_id'] : null;
 	$name = sanitize_text_field( $data['name'] );
-	$slug = ! empty( $data['slug'] )
-		? sanitize_title( $data['slug'] )
-		: sanitize_title( $name );
+	$slug_base = ! empty( $data['slug'] ) ? sanitize_title( $data['slug'] ) : sanitize_title( $name );
+
+	// Implement hierarchical slugs: prefix child with parent slug (e.g., ssc-mts)
+	if ( $parent_id ) {
+		$parent = gmcq_get_category( $parent_id );
+		if ( $parent && ! str_starts_with( $slug_base, $parent->slug . '-' ) ) {
+			$slug_base = $parent->slug . '-' . $slug_base;
+		}
+	}
 
 	// Ensure unique slug
-	$slug = gmcq_make_category_slug_unique( $slug, 0 );
-
-	$parent_id = ! empty( $data['parent_id'] ) ? (int) $data['parent_id'] : null;
+	$slug = gmcq_make_category_slug_unique( $slug_base, 0 );
 	$created_by = ! empty( $data['created_by'] ) ? (int) $data['created_by'] : get_current_user_id();
 
 	$insert_data = array(
@@ -251,17 +256,45 @@ function gmcq_update_category( int $category_id, array $data ) {
 		}
 	}
 
+	$new_parent_id = isset( $data['parent_id'] ) ? ( ! empty( $data['parent_id'] ) ? (int) $data['parent_id'] : null ) : ( ! empty( $category->parent_id ) ? (int) $category->parent_id : null );
+	$slug_source = null;
+
 	if ( isset( $data['slug'] ) ) {
-		$slug = sanitize_title( $data['slug'] );
-		if ( $slug !== $category->slug ) {
-			$update_data['slug'] = gmcq_make_category_slug_unique( $slug, $category_id );
-			$update_format[]     = '%s';
-		}
+		$slug_source = sanitize_title( $data['slug'] );
 	} elseif ( isset( $data['name'] ) && ! isset( $data['slug'] ) ) {
-		// Auto-generate slug from new name
-		$new_slug = sanitize_title( $data['name'] );
-		if ( $new_slug !== $category->slug ) {
-			$update_data['slug'] = gmcq_make_category_slug_unique( $new_slug, $category_id );
+		$slug_source = sanitize_title( $data['name'] );
+	}
+
+	// If slug base or parent changed, recalculate the hierarchical slug
+	if ( null !== $slug_source || ( isset( $data['parent_id'] ) && (int) $data['parent_id'] !== (int) $category->parent_id ) ) {
+		$final_slug_base = ( null !== $slug_source ) ? $slug_source : $category->slug;
+		
+		if ( $new_parent_id ) {
+			$parent = gmcq_get_category( $new_parent_id );
+			if ( $parent ) {
+				// Strip old parent prefix if moving between parents
+				if ( ! empty( $category->parent_id ) && (int) $category->parent_id !== (int) $new_parent_id ) {
+					$old_parent = gmcq_get_category( (int) $category->parent_id );
+					if ( $old_parent ) {
+						$final_slug_base = preg_replace( '/^' . preg_quote( $old_parent->slug, '/' ) . '-/', '', $final_slug_base );
+					}
+				}
+				
+				// Apply new parent prefix
+				if ( ! str_starts_with( $final_slug_base, $parent->slug . '-' ) ) {
+					$final_slug_base = $parent->slug . '-' . $final_slug_base;
+				}
+			}
+		} elseif ( ! empty( $category->parent_id ) ) {
+			// If moving from child to top-level, strip the old parent prefix
+			$old_parent = gmcq_get_category( (int) $category->parent_id );
+			if ( $old_parent ) {
+				$final_slug_base = preg_replace( '/^' . preg_quote( $old_parent->slug, '/' ) . '-/', '', $final_slug_base );
+			}
+		}
+
+		if ( $final_slug_base !== $category->slug ) {
+			$update_data['slug'] = gmcq_make_category_slug_unique( $final_slug_base, $category_id );
 			$update_format[]     = '%s';
 		}
 	}

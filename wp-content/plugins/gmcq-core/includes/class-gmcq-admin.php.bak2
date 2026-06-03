@@ -149,12 +149,10 @@ function gmcq_render_category_add_form():void{
 	<p id="gmcq-main-desc" class="description" style="margin-top:4px"><?php esc_html_e('A unique slug will be auto-generated from the name.','gmcq');?></p></div></fieldset>
 	<fieldset id="gmcq-sub-fieldset" style="display:none;margin-top:20px"><legend style="font-weight:bold;font-size:14px;margin-bottom:10px"><?php esc_html_e('Sub Category (Optional)','gmcq');?></legend>
 	<p class="description" style="margin-bottom:8px"><?php esc_html_e('Select an existing subcategory or type a new one under the selected main category.','gmcq');?></p>
-	<div id="gmcq-sub-field">
-	<div id="gmcq-sub-select-wrapper"><label for="gmcq-sub-select"><?php esc_html_e('Existing Subcategory','gmcq');?></label><br>
-	<select name="sub_category" id="gmcq-sub-select" class="regular-text"><option value=""><?php esc_html_e('— None —','gmcq');?></option></select></div>
-	<div id="gmcq-sub-new-wrapper" style="margin-top:8px"><label for="gmcq-sub-new"><?php esc_html_e('New Subcategory Name','gmcq');?></label><br>
-	<input name="sub_category_new" type="text" id="gmcq-sub-new" class="regular-text" placeholder="<?php esc_attr_e('Type new subcategory name...','gmcq');?>"></div>
-	</div></fieldset>
+	<div id="gmcq-sub-field"><label for="gmcq-sub-select"><?php esc_html_e('Existing Subcategory','gmcq');?></label><br>
+	<select name="sub_category" id="gmcq-sub-select" class="regular-text"><option value=""><?php esc_html_e('— None —','gmcq');?></option></select>
+	<div id="gmcq-sub-new-wrapper" style="display:none;margin-top:8px"><label for="gmcq-sub-new"><?php esc_html_e('New Subcategory Name','gmcq');?></label><br>
+	<input name="sub_category_new" type="text" id="gmcq-sub-new" class="regular-text" placeholder="<?php esc_attr_e('Type new subcategory name...','gmcq');?>"></div></div></fieldset>
 	<fieldset style="margin-top:20px"><legend style="font-weight:bold;font-size:14px;margin-bottom:10px"><?php esc_html_e('Description (Optional)','gmcq');?></legend>
 	<label for="gmcq-cat-desc" class="screen-reader-text"><?php esc_html_e('Description','gmcq');?></label>
 	<textarea name="description" id="gmcq-cat-desc" rows="4" class="large-text" style="width:100%"></textarea></fieldset>
@@ -163,38 +161,18 @@ function gmcq_render_category_add_form():void{
 	<div id="gmcq-form-response" role="alert" aria-live="polite" style="margin-top:15px;padding:10px;display:none;border-left:4px solid transparent"></div></div></div>
 	<script>
 	jQuery(document).ready(function($){
-		var hm=<?php echo $hm?'true':'false';?>,$ms=$('#gmcq-main-select'),$mn=$('#gmcq-main-new'),$mnw=$('#gmcq-main-new-wrapper'),$sf=$('#gmcq-sub-fieldset'),$ss=$('#gmcq-sub-select'),$ssw=$('#gmcq-sub-select-wrapper'),$sn=$('#gmcq-sub-new'),$snw=$('#gmcq-sub-new-wrapper'),$f=$('#gmcq-add-category-form'),$r=$('#gmcq-form-response'),ajax='<?php echo esc_url($au);?>',nonce='<?php echo esc_js($n);?>',list='<?php echo esc_url($lu);?>';
-		function hmc(){
-			var v=$ms.val();
-			if(v==='__other__'){$mnw.slideDown(200);$mn.prop('required',true).focus();}else{$mnw.slideUp(200);$mn.prop('required',false);}
-			var mid=(v&&v!==''&&v!=='__other__')?v:($mn.val().trim()?'new':'');
-			if(mid){
-				$sf.slideDown(200);
-				if(v&&v!==''&&v!=='__other__'){$ssw.show();$snw.hide();ls(parseInt(v));}
-				else{$ssw.hide();$snw.show();$sn.focus();}
-			}else{$sf.slideUp(200);}
-		}
-		function ls(p){
-			$ss.prop('disabled',true).html('<option><?php echo esc_js(__('Loading...','gmcq'));?></option>');
-			$.get(ajax,{action:'gmcq_get_subcategories',parent_id:p,_ajax_nonce:nonce},function(r){
-				$ss.prop('disabled',false).empty().append('<option value=""><?php echo esc_js(__('— None —','gmcq'));?></option>');
-				if(r.success){
-					if(r.data.subcategories&&r.data.subcategories.length){
-						$.each(r.data.subcategories,function(i,s){$ss.append('<option value="'+s.id+'">'+$('<span>').text(s.name).html()+'</option>');});
-					}
-					$ss.append('<option value="__other__"><?php echo esc_js(__('Other (Type New)','gmcq'));?></option>');
-				}
-			}).fail(function(){$ss.prop('disabled',false).empty().append('<option value=""><?php echo esc_js(__('— None —','gmcq'));?></option>');});
-		}
+		var hm=<?php echo $hm?'true':'false';?>,$ms=$('#gmcq-main-select'),$mn=$('#gmcq-main-new'),$mnw=$('#gmcq-main-new-wrapper'),$sf=$('#gmcq-sub-fieldset'),$ss=$('#gmcq-sub-select'),$sn=$('#gmcq-sub-new'),$snw=$('#gmcq-sub-new-wrapper'),$f=$('#gmcq-add-category-form'),$r=$('#gmcq-form-response'),ajax='<?php echo esc_url($au);?>',nonce='<?php echo esc_js($n);?>',list='<?php echo esc_url($lu);?>';
+		function hmc(){var v=$ms.val();if(v==='__other__'){$mnw.slideDown(200);$mn.prop('required',true).focus();}else{$mnw.slideUp(200);$mn.prop('required',false);}
+		var mid=(v&&v!==''&&v!=='__other__')?v:($mn.val().trim()?'new':'');if(mid){$sf.slideDown(200);if(v&&v!==''&&v!=='__other__'){ls(parseInt(v));}else{$ss.val('').trigger('change');$snw.slideUp(200);}}else{$sf.slideUp(200);}}
+		function ls(p){$ss.prop('disabled',true).html('<option><?php echo esc_js(__('Loading...','gmcq'));?></option>');$.get(ajax,{action:'gmcq_get_subcategories',parent_id:p,_ajax_nonce:nonce},function(r){
+		$ss.prop('disabled',false).empty().append('<option value=""><?php echo esc_js(__('— None —','gmcq'));?></option>');if(r.success&&r.data.subcategories&&r.data.subcategories.length){$.each(r.data.subcategories,function(i,s){$ss.append('<option value="'+s.id+'">'+$('<span>').text(s.name).html()+'</option>');});$ss.append('<option value="__other__"><?php echo esc_js(__('Other (Type New)','gmcq'));?></option>');}})
+		.fail(function(){$ss.prop('disabled',false).empty().append('<option value=""><?php echo esc_js(__('— None —','gmcq'));?></option>');});}
 		function hsc(){($ss.val()==='__other__')?$snw.slideDown(200):$snw.slideUp(200);}
-		if(hm)$ms.on('change',hmc);
-		$mn.on('input',function(){$(this).val().trim()?($sf.slideDown(200),$ssw.hide(),$snw.show(),$sn.focus()):(!$ms.val()||$ms.val()==='')&&$sf.slideUp(200);});
-		$ss.on('change',hsc);
+		if(hm)$ms.on('change',hmc);$mn.on('input',function(){$(this).val().trim()?$sf.slideDown(200):(!$ms.val()||$ms.val()==='')&&$sf.slideUp(200);});$ss.on('change',hsc);
 		$f.on('submit',function(e){
 			e.preventDefault();var $b=$(this).find('button[type="submit"]').prop('disabled',true).text('<?php echo esc_js(__('Saving...','gmcq'));?>');
 			$r.hide().removeClass('notice-success notice-error').empty();var mv='';if(hm){var sv=$ms.val();mv=(sv&&sv!==''&&sv!=='__other__')?sv:$mn.val().trim();}else{mv=$mn.val().trim();}
-			var sv='',ssv=$ss.val();
-			if($ssw.is(':hidden')){sv=$sn.val().trim();}else if(ssv&&ssv!==''&&ssv!=='__other__')sv=ssv;else if(ssv==='__other__')sv=$sn.val().trim();
+			var sv='',ssv=$ss.val();if(ssv&&ssv!==''&&ssv!=='__other__')sv=ssv;else if(ssv==='__other__')sv=$sn.val().trim();
 			if(!mv){$r.css('border-color','#dc3232').addClass('notice-error').html('<p><?php echo esc_js(__('Please select or type a main category.','gmcq'));?></p>').fadeIn();$b.prop('disabled',false).text('<?php echo esc_js(__('Save Category','gmcq'));?>');return;}
 			$.post(ajax,{action:'gmcq_add_category',main_category:mv,sub_category:sv,description:$('#gmcq-cat-desc').val(),_ajax_nonce:nonce},function(r){
 				if(r.success){$r.css('border-color','#46b450').addClass('notice-success').html('<p>'+r.data.message+'</p>').fadeIn();setTimeout(function(){window.location.href=list;},1000);}
@@ -207,34 +185,25 @@ function gmcq_render_category_add_form():void{
 
 function gmcq_render_category_edit_form(int $category_id):void{
 	$cat=gmcq_get_category($category_id);if(!$cat){echo '<div class="notice notice-error"><p>'.esc_html__('Category not found.','gmcq').'</p></div>';return;}
-	$mr=gmcq_get_categories(array('parent_only'=>true,'filter'=>'active'));$mains=$mr['categories'];
-	$lu=admin_url('admin.php?page=gmcq-categories');
-	$cat_name_esc=esc_attr($cat->name);$cat_slug_esc=esc_attr($cat->slug);$cat_desc_esc=esc_textarea($cat->description);
+	$pr=gmcq_get_categories(array('parent_only'=>true,'filter'=>'active'));$parents=$pr['categories'];
 	?><div class="wrap gmcq-dashboard-wrap"><h1><?php esc_html_e('Edit Category','gmcq');?></h1>
 	<div class="gmcq-card" style="max-width:800px">
-	<form id="gmcq-edit-category-form">
-	<input type="hidden" name="action" value="gmcq_update_category">
-	<input type="hidden" name="id" value="<?php echo esc_attr($cat->id);?>">
-	<input type="hidden" name="_ajax_nonce" value="<?php echo esc_attr(wp_create_nonce('gmcq_category_nonce'));?>">
-	<table class="form-table"><tr><th scope="row"><label for="gmcq-edit-cat-name"><?php esc_html_e('Name','gmcq');?> <span style="color:red">*</span></label></th>
-	<td><input name="name" type="text" id="gmcq-edit-cat-name" class="regular-text" value="<?php echo $cat_name_esc;?>" required></td></tr>
-	<tr><th scope="row"><label for="gmcq-edit-cat-slug"><?php esc_html_e('Slug','gmcq');?></label></th>
-	<td><input name="slug" type="text" id="gmcq-edit-cat-slug" class="regular-text" value="<?php echo $cat_slug_esc;?>"><p class="description"><?php esc_html_e('Leave empty to auto-generate from the name.','gmcq');?></p></td></tr>
-	<tr><th scope="row"><label for="gmcq-edit-cat-parent"><?php esc_html_e('Parent Category','gmcq');?></label></th>
-	<td><select name="parent_id" id="gmcq-edit-cat-parent"><option value=""><?php esc_html_e('None (Top Level)','gmcq');?></option>
-	<?php foreach($mains as$main){if($main->id===$cat->id)continue;?><option value="<?php echo esc_attr($main->id);?>" <?php selected($cat->parent_id,$main->id);?>><?php echo esc_html($main->name);?></option><?php }?></select>
+	<form id="gmcq-edit-category-form"><input type="hidden" name="action" value="gmcq_update_category">
+	<input type="hidden" name="id" value="<?php echo esc_attr($cat->id);?>"><input type="hidden" name="_ajax_nonce" value="<?php echo esc_attr(wp_create_nonce('gmcq_category_nonce'));?>">
+	<table class="form-table"><tr><th scope="row"><label for="gmcq-cat-name"><?php esc_html_e('Name','gmcq');?> <span style="color:red">*</span></label></th><td><input name="name" type="text" id="gmcq-cat-name" class="regular-text" value="<?php echo esc_attr($cat->name);?>" required></td></tr>
+	<tr><th scope="row"><label for="gmcq-cat-slug"><?php esc_html_e('Slug','gmcq');?></label></th><td><input name="slug" type="text" id="gmcq-cat-slug" class="regular-text" value="<?php echo esc_attr($cat->slug);?>"><p class="description"><?php esc_html_e('Leave empty to auto-generate from the name.','gmcq');?></p></td></tr>
+	<tr><th scope="row"><label for="gmcq-cat-parent"><?php esc_html_e('Parent Category','gmcq');?></label></th><td><select name="parent_id" id="gmcq-cat-parent"><option value=""><?php esc_html_e('None (Top Level)','gmcq');?></option>
+	<?php foreach($parents as$p){if($p->id===$cat->id)continue;?><option value="<?php echo esc_attr($p->id);?>" <?php selected($cat->parent_id,$p->id);?>><?php echo esc_html($p->name);?></option><?php }?></select>
 	<p class="description"><?php esc_html_e('Categories support 2-level hierarchy only.','gmcq');?></p></td></tr>
-	<tr><th scope="row"><label for="gmcq-edit-cat-desc"><?php esc_html_e('Description','gmcq');?></label></th>
-	<td><textarea name="description" id="gmcq-edit-cat-desc" rows="4" class="regular-text"><?php echo $cat_desc_esc;?></textarea></td></tr>
+	<tr><th scope="row"><label for="gmcq-cat-desc"><?php esc_html_e('Description','gmcq');?></label></th><td><textarea name="description" id="gmcq-cat-desc" rows="4" class="regular-text"><?php echo esc_textarea($cat->description);?></textarea></td></tr>
 	</table><p class="submit"><button type="submit" class="button button-primary"><?php esc_html_e('Update Category','gmcq');?></button>
-	<a href="<?php echo esc_url($lu);?>" class="button button-secondary"><?php esc_html_e('Cancel','gmcq');?></a></p></form>
-	<div id="gmcq-edit-form-response" role="alert" aria-live="polite" style="margin-top:15px;padding:10px;display:none;border-left:4px solid transparent"></div></div></div>
+	<a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-categories'));?>" class="button button-secondary"><?php esc_html_e('Cancel','gmcq');?></a></p></form>
+	<div id="gmcq-form-response" role="alert" aria-live="polite" style="margin-top:15px;padding:10px;display:none;border-left:4px solid transparent"></div></div></div>
 	<script>
 	jQuery(document).ready(function($){$('#gmcq-edit-category-form').on('submit',function(e){
-		e.preventDefault();var $b=$(this).find('button[type="submit"]').prop('disabled',true).text('<?php echo esc_js(__('Updating...','gmcq'));?>');var $r=$('#gmcq-edit-form-response').hide();
+		e.preventDefault();var $b=$(this).find('button[type="submit"]').prop('disabled',true).text('<?php echo esc_js(__('Updating...','gmcq'));?>');var $r=$('#gmcq-form-response').hide();
 		$.post(gmcqAdmin.ajaxUrl,$(this).serialize(),function(r){if(r.success){$r.css('border-color','#46b450').text(r.data.message).fadeIn();setTimeout(function(){window.location.href='<?php echo esc_js(admin_url('admin.php?page=gmcq-categories'));?>';},1000);}else{$r.css('border-color','#dc3232').text(r.data.message||'<?php echo esc_js(__('Error updating category.','gmcq'));?>').fadeIn();$b.prop('disabled',false).text('<?php echo esc_js(__('Update Category','gmcq'));?>');}
-		}).fail(function(){$r.css('border-color','#dc3232').text('<?php echo esc_js(__('Server error.','gmcq'));?>').fadeIn();$b.prop('disabled',false).text('<?php echo esc_js(__('Update Category','gmcq'));?>');});});
-	});
+		}).fail(function(){$r.css('border-color','#dc3232').text('<?php echo esc_js(__('Server error.','gmcq'));?>').fadeIn();$b.prop('disabled',false).text('<?php echo esc_js(__('Update Category','gmcq'));?>');});});});
 	</script><?php
 }
 

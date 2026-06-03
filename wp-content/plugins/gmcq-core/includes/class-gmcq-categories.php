@@ -417,8 +417,46 @@ function gmcq_activate_category( int $category_id ) {
  * @return bool|\WP_Error True on success, WP_Error on failure.
  */
 function gmcq_delete_category( int $category_id ) {
-	// Phase 1 spec: categories are deactivated, not hard deleted
-	return gmcq_deactivate_category( $category_id );
+	global $wpdb;
+	
+	$category = gmcq_get_category( $category_id );
+	if ( ! $category ) {
+		return new WP_Error( 'not_found', 'Category not found.' );
+	}
+	
+	if ( 1 === (int) $category->is_active ) {
+		return new WP_Error( 'active_category', 'Please deactivate first.' );
+	}
+	
+	if ( (int) $category->question_count > 0 ) {
+		return new WP_Error( 'has_questions', 'Cannot remove category because it has questions.' );
+	}
+	
+	// Check for active children
+	$children = gmcq_get_categories( array( 'parent_id' => $category_id, 'filter' => 'active' ) );
+	if ( ! empty( $children['categories'] ) ) {
+		$names = array();
+		foreach ( $children['categories'] as $c ) {
+			$names[] = $c->name;
+		}
+		return new WP_Error( 'has_active_children', 'Cannot remove category. Active children: ' . implode( ', ', $names ) );
+	}
+	
+	// Hard delete (only allowed if no questions and no active children)
+	$deleted = $wpdb->delete(
+		$wpdb->prefix . 'gmcq_categories',
+		array( 'id' => $category_id ),
+		array( '%d' )
+	);
+	
+	if ( false === $deleted ) {
+		return new WP_Error( 'db_error', 'Database error: ' . $wpdb->last_error );
+	}
+	
+	gmcq_clear_dashboard_cache( 'category' );
+	do_action( 'gmcq_category_deleted', $category_id );
+	
+	return true;
 }
 
 /**
@@ -809,6 +847,8 @@ function gmcq_register_category_ajax_handlers(): void {
 	add_action( 'wp_ajax_gmcq_activate_category', 'gmcq_ajax_activate_category' );
 	add_action( 'wp_ajax_gmcq_bulk_categories', 'gmcq_ajax_bulk_categories' );
 	add_action( 'wp_ajax_gmcq_search_categories', 'gmcq_ajax_search_categories' );
+	add_action( 'wp_ajax_gmcq_get_subcategories', 'gmcq_ajax_get_subcategories' );
+	add_action( 'wp_ajax_gmcq_delete_category', 'gmcq_ajax_delete_category' );
 }
 
 /**
@@ -819,20 +859,51 @@ function gmcq_ajax_add_category(): void {
 
 	if ( ! current_user_can( 'manage_gmcq' ) ) {
 		if ( ob_get_length() ) { ob_clean(); }
-		wp_send_json_error( array( 'message' => 'Permission denied.' ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'gmcq' ) ) );
 	}
 
-	$result = gmcq_create_category( $_POST );
-	
+	$main_category = isset( $_POST['main_category'] ) ? sanitize_text_field( $_POST['main_category'] ) : '';
+	$sub_category  = isset( $_POST['sub_category'] ) ? sanitize_text_field( $_POST['sub_category'] ) : '';
+	$description   = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
+
+	if ( empty( $main_category ) ) {
+		wp_send_json_error( array( 'message' => __( 'Main category is required.', 'gmcq' ) ) );
+	}
+
+	$main_id = 0;
+	if ( is_numeric( $main_category ) && (int) $main_category > 0 ) {
+		$main_id = (int) $main_category;
+	} else {
+		$main_id = gmcq_create_category( array(
+			'name'        => $main_category,
+			'description' => $description,
+		) );
+		if ( is_wp_error( $main_id ) ) {
+			wp_send_json_error( array( 'message' => $main_id->get_error_message() ) );
+		}
+	}
+
+	$sub_id = 0;
+	if ( ! empty( $sub_category ) ) {
+		if ( is_numeric( $sub_category ) && (int) $sub_category > 0 ) {
+			$sub_id = (int) $sub_category;
+		} else {
+			$sub_id = gmcq_create_category( array(
+				'name'        => $sub_category,
+				'parent_id'   => $main_id,
+				'description' => $description,
+			) );
+			if ( is_wp_error( $sub_id ) ) {
+				wp_send_json_error( array( 'message' => $sub_id->get_error_message() ) );
+			}
+		}
+	}
+
 	if ( ob_get_length() ) {
 		ob_clean(); // Strip any PHP warnings/notices so JSON doesn't get corrupted
 	}
 
-	if ( is_wp_error( $result ) ) {
-		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-	}
-
-	wp_send_json_success( array( 'id' => $result, 'message' => 'Category created successfully.' ) );
+	wp_send_json_success( array( 'message' => __( 'Category added successfully.', 'gmcq' ) ) );
 }
 
 /**
@@ -1036,6 +1107,54 @@ function gmcq_recalculate_category_counts(): void {
 		 ) q ON q.category_id = c.id
 		 SET c.question_count = q.cnt"
 	);
+}
+
+/**
+ * AJAX handler: Get subcategories.
+ */
+/**
+ * AJAX handler: Delete category.
+ */
+function gmcq_ajax_delete_category(): void {
+	check_ajax_referer( 'gmcq_category_nonce' );
+
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'gmcq' ) ) );
+	}
+
+	$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+	if ( $id <= 0 ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid category ID.', 'gmcq' ) ) );
+	}
+
+	$result = gmcq_delete_category( $id );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+	}
+
+	wp_send_json_success( array( 'message' => __( 'Category removed successfully.', 'gmcq' ) ) );
+}
+
+function gmcq_ajax_get_subcategories(): void {
+	check_ajax_referer( 'gmcq_category_nonce' );
+
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'gmcq' ) ) );
+	}
+
+	$parent_id = isset( $_GET['parent_id'] ) ? (int) $_GET['parent_id'] : 0;
+	if ( $parent_id <= 0 ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid parent ID.', 'gmcq' ) ) );
+	}
+
+	$result = gmcq_get_categories( array(
+		'parent_id' => $parent_id,
+		'filter'    => 'active',
+	) );
+
+	wp_send_json_success( array(
+		'subcategories' => $result['categories']
+	) );
 }
 
 // Automatically initialize category hooks and AJAX endpoints when this file is loaded

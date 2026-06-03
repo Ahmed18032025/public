@@ -72,6 +72,9 @@ function gmcq_create_category( array $data ) {
 	}
 
 	$category_id = (int) $wpdb->insert_id;
+	if ( ! $category_id ) {
+		return new WP_Error( 'db_insert_failed', 'Failed to create category.' );
+	}
 
 	// Invalidate dashboard caches
 	gmcq_clear_dashboard_cache( 'category' );
@@ -874,27 +877,59 @@ function gmcq_ajax_add_category(): void {
 	if ( is_numeric( $main_category ) && (int) $main_category > 0 ) {
 		$main_id = (int) $main_category;
 	} else {
-		$main_id = gmcq_create_category( array(
-			'name'        => $main_category,
-			'description' => $description,
+		global $wpdb;
+		// Check if a parent category with this name already exists to avoid duplicates
+		$existing_main = $wpdb->get_var( $wpdb->prepare(
+			"SELECT id FROM {$wpdb->prefix}gmcq_categories WHERE name = %s AND parent_id IS NULL LIMIT 1",
+			$main_category
 		) );
-		if ( is_wp_error( $main_id ) ) {
-			wp_send_json_error( array( 'message' => $main_id->get_error_message() ) );
+
+		if ( $existing_main ) {
+			$main_id = (int) $existing_main;
+		} else {
+			$main_id = gmcq_create_category( array(
+				'name'        => $main_category,
+				'description' => $description,
+			) );
+			if ( is_wp_error( $main_id ) ) {
+				wp_send_json_error( array( 'message' => $main_id->get_error_message() ) );
+			}
 		}
 	}
 
 	$sub_id = 0;
 	if ( ! empty( $sub_category ) ) {
+		if ( ! $main_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid parent category context.', 'gmcq' ) ) );
+		}
+
 		if ( is_numeric( $sub_category ) && (int) $sub_category > 0 ) {
 			$sub_id = (int) $sub_category;
+			// Ensure the existing sub-category is linked to the chosen parent
+			$update_res = gmcq_update_category( $sub_id, array( 'parent_id' => $main_id ) );
+			if ( is_wp_error( $update_res ) ) {
+				wp_send_json_error( array( 'message' => $update_res->get_error_message() ) );
+			}
 		} else {
-			$sub_id = gmcq_create_category( array(
-				'name'        => $sub_category,
-				'parent_id'   => $main_id,
-				'description' => $description,
+			global $wpdb;
+			// Check if this sub-category name already exists under the parent or as top-level
+			$existing_sub = $wpdb->get_var( $wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}gmcq_categories WHERE name = %s AND (parent_id = %d OR parent_id IS NULL) LIMIT 1",
+				$sub_category,
+				$main_id
 			) );
-			if ( is_wp_error( $sub_id ) ) {
-				wp_send_json_error( array( 'message' => $sub_id->get_error_message() ) );
+
+			if ( $existing_sub ) {
+				gmcq_update_category( (int) $existing_sub, array( 'parent_id' => $main_id ) );
+			} else {
+				$sub_id = gmcq_create_category( array(
+					'name'        => $sub_category,
+					'parent_id'   => $main_id,
+					'description' => $description,
+				) );
+				if ( is_wp_error( $sub_id ) ) {
+					wp_send_json_error( array( 'message' => $sub_id->get_error_message() ) );
+				}
 			}
 		}
 	}

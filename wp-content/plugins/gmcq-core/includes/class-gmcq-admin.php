@@ -86,7 +86,7 @@ function gmcq_render_categories_page():void{
 	<th style="width:80px"><?php esc_html_e('Status','gmcq');?></th></tr></thead>
 	<tbody id="gmcq-categories-tbody"><?php foreach($cats as$cat):?>
 	<tr><td><?php echo esc_html($cat->id);?></td>
-	<td><?php $indent=!empty($cat->parent_id)?'&mdash;&mdash; ':'';echo $indent.'<strong>'.esc_html($cat->name).'</strong>';?>
+	<td><?php $indent=!empty($cat->parent_id)?'<span class="gmcq-indent" style="color:#999;margin-right:8px;font-weight:normal;">&mdash;</span> ':'';echo $indent.'<strong>'.esc_html($cat->name).'</strong>';?>
 	<div class="row-actions" style="font-size:13px">
 	<span class="edit"><a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-categories&action=edit&id='.$cat->id));?>"><?php esc_html_e('Edit','gmcq');?></a></span>
 	<?php if(1===(int)$cat->is_active):?>
@@ -171,7 +171,7 @@ function gmcq_render_category_add_form():void{
 			if(mid){
 				$sf.slideDown(200);
 				if(v&&v!==''&&v!=='__other__'){$ssw.show();$snw.hide();ls(parseInt(v));}
-				else{$ssw.hide();$snw.show();$sn.focus();}
+				else{$ssw.hide();$snw.show();}
 			}else{$sf.slideUp(200);}
 		}
 		function ls(p){
@@ -188,13 +188,13 @@ function gmcq_render_category_add_form():void{
 		}
 		function hsc(){($ss.val()==='__other__')?$snw.slideDown(200):$snw.slideUp(200);}
 		if(hm)$ms.on('change',hmc);
-		$mn.on('input',function(){$(this).val().trim()?($sf.slideDown(200),$ssw.hide(),$snw.show(),$sn.focus()):(!$ms.val()||$ms.val()==='')&&$sf.slideUp(200);});
+		$mn.on('input',function(){$(this).val().trim()?($sf.slideDown(200),$ssw.hide(),$snw.show()):(!$ms.val()||$ms.val()==='')&&$sf.slideUp(200);});
 		$ss.on('change',hsc);
 		$f.on('submit',function(e){
 			e.preventDefault();var $b=$(this).find('button[type="submit"]').prop('disabled',true).text('<?php echo esc_js(__('Saving...','gmcq'));?>');
-			$r.hide().removeClass('notice-success notice-error').empty();var mv='';if(hm){var sv=$ms.val();mv=(sv&&sv!==''&&sv!=='__other__')?sv:$mn.val().trim();}else{mv=$mn.val().trim();}
-			var sv='',ssv=$ss.val();
-			if($ssw.is(':hidden')){sv=$sn.val().trim();}else if(ssv&&ssv!==''&&ssv!=='__other__')sv=ssv;else if(ssv==='__other__')sv=$sn.val().trim();
+			$r.hide().removeClass('notice-success notice-error').empty();
+			var mv=''; if(hm){var m_sel=$ms.val();mv=(m_sel&&m_sel!==''&&m_sel!=='__other__')?m_sel:$mn.val().trim();}else{mv=$mn.val().trim();}
+			var sv='',ssv=$ss.val(); if($ssw.is(':hidden')){sv=$sn.val().trim();}else if(ssv&&ssv!==''&&ssv!=='__other__')sv=ssv;else if(ssv==='__other__')sv=$sn.val().trim();
 			if(!mv){$r.css('border-color','#dc3232').addClass('notice-error').html('<p><?php echo esc_js(__('Please select or type a main category.','gmcq'));?></p>').fadeIn();$b.prop('disabled',false).text('<?php echo esc_js(__('Save Category','gmcq'));?>');return;}
 			$.post(ajax,{action:'gmcq_add_category',main_category:mv,sub_category:sv,description:$('#gmcq-cat-desc').val(),_ajax_nonce:nonce},function(r){
 				if(r.success){$r.css('border-color','#46b450').addClass('notice-success').html('<p>'+r.data.message+'</p>').fadeIn();setTimeout(function(){window.location.href=list;},1000);}

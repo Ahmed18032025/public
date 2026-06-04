@@ -27,6 +27,7 @@ $gmcq_core_files = array(
 	'includes/class-gmcq-helpers.php',
 	'includes/class-gmcq-db.php',
 	'includes/class-gmcq-categories.php',
+	'includes/class-gmcq-questions.php',
 	'includes/class-gmcq-admin.php',
 );
 

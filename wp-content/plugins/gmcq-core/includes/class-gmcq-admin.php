@@ -9,7 +9,7 @@ function gmcq_register_admin_menus(): void {
 	add_menu_page(__( 'GMCQ Dashboard', 'gmcq' ),__( 'GMCQ', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page','dashicons-analytics',30);
 	add_submenu_page('gmcq-dashboard',__( 'GMCQ Dashboard', 'gmcq' ),__( 'Dashboard', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page');
 	add_submenu_page('gmcq-dashboard',__( 'Categories', 'gmcq' ),__( 'Categories', 'gmcq' ),'manage_gmcq','gmcq-categories','gmcq_render_categories_page');
-	add_submenu_page('gmcq-dashboard',__( 'Questions', 'gmcq' ),__( 'Questions', 'gmcq' ),'manage_gmcq','gmcq-questions','gmcq_render_questions_placeholder');
+add_submenu_page('gmcq-dashboard',__( 'Questions', 'gmcq' ),__( 'Questions', 'gmcq' ),'manage_gmcq','gmcq-questions','gmcq_render_questions_page');
 	add_submenu_page('gmcq-dashboard',__( 'Quizzes', 'gmcq' ),__( 'Quizzes', 'gmcq' ),'manage_gmcq','gmcq-quizzes','gmcq_render_quizzes_placeholder');
 	add_submenu_page('gmcq-dashboard',__( 'CSV Import', 'gmcq' ),__( 'CSV Import', 'gmcq' ),'manage_gmcq','gmcq-import','gmcq_render_import_placeholder');
 	add_submenu_page('gmcq-dashboard',__( 'Reports', 'gmcq' ),__( 'Reports', 'gmcq' ),'manage_gmcq','gmcq-reports','gmcq_render_reports_placeholder');

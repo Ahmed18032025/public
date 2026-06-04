@@ -32,7 +32,7 @@
 
 ### Categories
 - Deactivate only
-- Soft and Hard delete
+- Hard delete only (no soft delete columns in V1)
 
 ### Questions
 - Hard delete

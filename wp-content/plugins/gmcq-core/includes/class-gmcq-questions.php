@@ -83,7 +83,6 @@ function gmcq_create_question( array $data ) {
 			'usage_count'    => 0,
 			'created_by'     => ! empty( $data['created_by'] ) ? (int) $data['created_by'] : get_current_user_id(),
 		);
-		$insert_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%d' );
 
 		if ( ! empty( $data['import_id'] ) ) {
 			$insert_data['import_id'] = (int) $data['import_id'];
@@ -895,7 +894,38 @@ function gmcq_register_question_ajax_handlers(): void {
  * @return array Normalized answers array.
  */
 function gmcq_read_post_answers(): array {
-	$raw = isset( $_POST['answers'] ) ? (array) $_POST['answers'] : array();
+	if ( ! isset( $_POST['answers'] ) || ! is_array( $_POST['answers'] ) ) {
+		return array();
+	}
+
+	$raw = $_POST['answers'];
+
+	// Detect FLAT HTML form structure (the actual form rendering uses this):
+	//   answers[answer_text][] = A, B, C, D
+	//   answers[is_correct]    = 1   (for mcq_single, single value)
+	//   answers[is_correct][]  = ['1', '', '', '']   (for mcq_multiple, indexed array)
+	// In PHP, $_POST['answers'] looks like: ['answer_text' => [...], 'is_correct' => ...]
+	if ( isset( $raw['answer_text'] ) || isset( $raw['is_correct'] ) ) {
+		$texts    = isset( $raw['answer_text'] ) ? (array) $raw['answer_text'] : array();
+		$corrects = isset( $raw['is_correct'] ) ? (array) $raw['is_correct'] : array();
+
+		$out = array();
+		foreach ( $texts as $i => $text ) {
+			$is_correct = 0;
+			// Handle indexed correctness from the form
+			if ( isset( $corrects[ $i ] ) ) {
+				$is_correct = 1;
+			}
+			$out[] = array(
+				'answer_text' => wp_kses_post( $text ),
+				'is_correct'  => $is_correct,
+			);
+		}
+		return $out;
+	}
+
+	// Detect NESTED structure (used by AJAX/CSV import batch_save):
+	//   answers: [ { answer_text: 'A', is_correct: 1 }, { ... } ]
 	$out = array();
 	foreach ( $raw as $ans ) {
 		$ans = (array) $ans;
@@ -1306,7 +1336,9 @@ function gmcq_render_questions_page(): void {
 	<div id="gmcq-notice-area" role="alert" aria-live="polite" style="display:none;position:fixed;top:50px;right:20px;z-index:10000;max-width:400px;padding:12px 20px;border-left:4px solid #46b450;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15)"></div>
 	<script>
 	jQuery(document).ready(function($){
-		var nonce = (typeof gmcqAdmin !== 'undefined') ? gmcqAdmin.nonce : '';
+		// Read the QUESTION nonce from the bulk form's hidden field (set by wp_nonce_field('gmcq_question_nonce')).
+		// gmcqAdmin.nonce is the CATEGORY nonce, so don't use it here — would cause nonce verification to fail silently.
+		var nonce = $('#gmcq-bulk-form input[name="_ajax_nonce"]').val() || '';
 		var $n = $('#gmcq-notice-area');
 		function notice(msg, isError){
 			$n.css('border-color', isError ? '#dc3232' : '#46b450').text(msg).fadeIn(300).delay(isError ? 5000 : 2000).fadeOut(600);
@@ -1498,16 +1530,16 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 									<?php
 									$ai = 0;
 									foreach ( $answers as $ans ) :
-										$ai++;
 										$input_type = ( 'mcq_single' === $q_type ) ? 'radio' : 'checkbox';
-										$input_name = ( 'mcq_single' === $q_type ) ? 'answers[is_correct]' : 'answers[is_correct][]';
+										$input_name = ( 'mcq_single' === $q_type ) ? 'answers[is_correct]' : "answers[is_correct][{$ai}]";
+										$input_val  = ( 'mcq_single' === $q_type ) ? $ai : '1';
 										?>
 										<tr class="gmcq-answer-row" data-idx="<?php echo $ai; ?>">
-											<td><input type="<?php echo esc_attr( $input_type ); ?>" name="<?php echo esc_attr( $input_name ); ?>" value="1" <?php checked( ! empty( $ans->is_correct ) ); ?>></td>
-											<td><input type="text" name="answers[answer_text][]" value="<?php echo esc_attr( $ans->answer_text ?? '' ); ?>" class="large-text" style="width:100%"></td>
+											<td><input type="<?php echo esc_attr( $input_type ); ?>" name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $input_val ); ?>" class="gmcq-correct-input" <?php checked( ! empty( $ans->is_correct ) ); ?>></td>
+											<td><input type="text" name="answers[answer_text][]" value="<?php echo esc_attr( $ans->answer_text ?? '' ); ?>" class="gmcq-answer-text large-text" style="width:100%"></td>
 											<td><button type="button" class="button gmcq-remove-answer"><?php esc_html_e( 'Delete', 'gmcq' ); ?></button></td>
 										</tr>
-									<?php endforeach; ?>
+									<?php $ai++; endforeach; ?>
 								</tbody>
 							</table>
 							<button type="button" class="button" id="gmcq-add-answer" style="margin-top:8px">+ <?php esc_html_e( 'Add Option', 'gmcq' ); ?></button>
@@ -1574,14 +1606,11 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 			$('#gmcq-answers-row, #gmcq-add-answer').show();
 			$('#gmcq-tf-row').hide();
 			var inputType = (type === 'mcq_single') ? 'radio' : 'checkbox';
-			var name = (type === 'mcq_single') ? 'answers[is_correct]' : 'answers[is_correct][]';
-			$('.gmcq-answer-row').each(function(){
-				$(this).find('input[type="radio"], input[type="checkbox"]').attr('name', name);
-				if (inputType === 'radio') {
-					$(this).find('input').attr('type', 'radio');
-				} else {
-					$(this).find('input').attr('type', 'checkbox');
-				}
+			$('.gmcq-answer-row').each(function(i){
+				var $correct = $(this).find('input.gmcq-correct-input');
+				var rowName = (type === 'mcq_single') ? 'answers[is_correct]' : 'answers[is_correct]['+i+']';
+				var rowVal = (type === 'mcq_single') ? i : '1';
+				$correct.attr('name', rowName).attr('type', inputType).val(rowVal);
 			});
 		}
 		$('#gmcq-q-type').on('change', updateAnswerInputs);
@@ -1589,23 +1618,25 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 		$('#gmcq-add-answer').on('click', function(){
 			var count = parseInt($('#gmcq-answer-count').val());
 			if (count >= 6) { alert('<?php echo esc_js( __( 'Maximum 6 answer options.', 'gmcq' ) ); ?>'); return; }
-			count++;
 			var type = $('#gmcq-q-type').val();
 			var inputType = (type === 'mcq_single') ? 'radio' : 'checkbox';
-			var name = (type === 'mcq_single') ? 'answers[is_correct]' : 'answers[is_correct][]';
+			var name = (type === 'mcq_single') ? 'answers[is_correct]' : 'answers[is_correct]['+count+']';
+			var val = (type === 'mcq_single') ? count : '1';
 			var row = '<tr class="gmcq-answer-row" data-idx="' + count + '">' +
-				'<td><input type="' + inputType + '" name="' + name + '" value="1"></td>' +
-				'<td><input type="text" name="answers[answer_text][]" class="large-text" style="width:100%"></td>' +
+				'<td><input type="' + inputType + '" name="' + name + '" value="' + val + '" class="gmcq-correct-input"></td>' +
+				'<td><input type="text" name="answers[answer_text][]" class="gmcq-answer-text large-text" style="width:100%"></td>' +
 				'<td><button type="button" class="button gmcq-remove-answer"><?php echo esc_js( __( 'Delete', 'gmcq' ) ); ?></button></td>' +
 				'</tr>';
 			$('#gmcq-answers-table tbody').append(row);
-			$('#gmcq-answer-count').val(count);
+			$('#gmcq-answer-count').val(count + 1);
+			if (type === 'mcq_single') updateAnswerInputs(); // Re-sync values
 		});
 		$('#gmcq-answers-table').on('click', '.gmcq-remove-answer', function(){
 			var count = parseInt($('#gmcq-answer-count').val());
 			if (count <= 2) { alert('<?php echo esc_js( __( 'Minimum 2 answer options required.', 'gmcq' ) ); ?>'); return; }
 			$(this).closest('tr').remove();
 			$('#gmcq-answer-count').val(count - 1);
+			updateAnswerInputs(); // Re-index everything
 		});
 		$('#gmcq-question-form').on('submit', function(e){
 			e.preventDefault();
@@ -1619,7 +1650,10 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 				var eEd = tinyMCE.get('gmcq_q_explanation');
 				if (eEd) formData.push({name: 'explanation', value: eEd.getContent()});
 			}
-			$.post(gmcqAdmin.ajaxUrl, $.param(formData) + '&action=gmcq_save_question&_ajax_nonce=' + nonce, function(r){
+			// The form's hidden _ajax_nonce field (from wp_nonce_field) already provides the question nonce.
+			// Do NOT append &_ajax_nonce= from gmcqAdmin.nonce here, since gmcqAdmin.nonce is the CATEGORY nonce
+			// and would override the question nonce (causing a stuck "Saving..." state).
+			$.post(gmcqAdmin.ajaxUrl, $.param(formData) + '&action=gmcq_save_question', function(r){
 				if (r.success) {
 					$('#gmcq-form-response').css('border-color', '#46b450').html('<p>' + r.data.message + '</p>').fadeIn();
 					setTimeout(function(){ window.location.href = '<?php echo esc_js( $list_url ); ?>'; }, 1000);

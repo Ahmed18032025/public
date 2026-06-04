@@ -120,6 +120,7 @@ function gmcq_clear_dashboard_cache( string $entity_type = 'all' ): void {
 			delete_transient( 'gmcq_system_health' );
 			delete_transient( 'gmcq_data_integrity' );
 			delete_transient( 'gmcq_duplicate_count' );
+			delete_transient( 'gmcq_question_filter_counts' );
 			break;
 
 		case 'quiz':
@@ -132,6 +133,7 @@ function gmcq_clear_dashboard_cache( string $entity_type = 'all' ): void {
 		case 'import':
 			delete_transient( 'gmcq_dashboard_stats' );
 			delete_transient( 'gmcq_system_health' );
+			delete_transient( 'gmcq_question_filter_counts' );
 			break;
 
 		default:
@@ -142,6 +144,7 @@ function gmcq_clear_dashboard_cache( string $entity_type = 'all' ): void {
 			delete_transient( 'gmcq_category_stats' );
 			delete_transient( 'gmcq_category_tree_counts' );
 			delete_transient( 'gmcq_duplicate_count' );
+			delete_transient( 'gmcq_question_filter_counts' );
 			delete_transient( 'gmcq_top_quizzes' );
 			delete_transient( 'gmcq_recent_quizzes' );
 			break;

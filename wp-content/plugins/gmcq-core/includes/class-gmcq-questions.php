@@ -83,6 +83,7 @@ function gmcq_create_question( array $data ) {
 			'usage_count'    => 0,
 			'created_by'     => ! empty( $data['created_by'] ) ? (int) $data['created_by'] : get_current_user_id(),
 		);
+		$insert_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%d' );
 
 		if ( ! empty( $data['import_id'] ) ) {
 			$insert_data['import_id'] = (int) $data['import_id'];
@@ -211,8 +212,8 @@ function gmcq_update_question( int $question_id, array $data ) {
 		$answers = $data['answers'];
 		if ( 'true_false' === $data['question_type'] ) {
 			$answers = array(
-				array( 'answer_text' => 'True', 'is_correct' => ! empty( $data['true_is_correct'] ) ? 1 : 0 ),
-				array( 'answer_text' => 'False', 'is_correct' => empty( $data['true_is_correct'] ) ? 1 : 0 ),
+				array( 'answer_text' => __( 'True', 'gmcq' ), 'is_correct' => ! empty( $data['true_is_correct'] ) ? 1 : 0 ),
+				array( 'answer_text' => __( 'False', 'gmcq' ), 'is_correct' => empty( $data['true_is_correct'] ) ? 1 : 0 ),
 			);
 		}
 
@@ -591,7 +592,7 @@ function gmcq_search_questions( array $args = array() ): array {
 	$per_page = min( 100, max( 1, (int) $args['per_page'] ) );
 
 	$where  = array( '1=1' );
-	$join   = '';
+	$join   = " LEFT JOIN {$p}gmcq_categories c ON c.id = q.category_id";
 	$prepare = array();
 
 	switch ( $args['filter'] ) {
@@ -614,7 +615,6 @@ function gmcq_search_questions( array $args = array() ): array {
 			$where[] = 'q.is_active = 0';
 			break;
 		case 'inactive_category':
-			$join   .= " JOIN {$p}gmcq_categories c ON c.id = q.category_id";
 			$where[] = 'c.is_active = 0';
 			break;
 		case 'archived_quiz':
@@ -651,7 +651,7 @@ function gmcq_search_questions( array $args = array() ): array {
 
 	$results = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT q.id, q.category_id, q.question_text, q.question_type, q.difficulty,
+			"SELECT q.id, q.category_id, q.question_text, q.question_hash, q.question_type, q.difficulty,
 			        q.marks, q.negative_marks, q.is_active, q.usage_count, q.deleted_at,
 			        q.created_at, c.name AS category_name
 			 FROM {$p}gmcq_questions q
@@ -907,13 +907,15 @@ function gmcq_read_post_answers(): array {
 	// In PHP, $_POST['answers'] looks like: ['answer_text' => [...], 'is_correct' => ...]
 	if ( isset( $raw['answer_text'] ) || isset( $raw['is_correct'] ) ) {
 		$texts    = isset( $raw['answer_text'] ) ? (array) $raw['answer_text'] : array();
-		$corrects = isset( $raw['is_correct'] ) ? (array) $raw['is_correct'] : array();
+		$corrects = isset( $raw['is_correct'] ) ? $raw['is_correct'] : array();
 
 		$out = array();
 		foreach ( $texts as $i => $text ) {
 			$is_correct = 0;
-			// Handle indexed correctness from the form
-			if ( isset( $corrects[ $i ] ) ) {
+			// Handle MCQ Multiple (array of indices) vs MCQ Single (single index value)
+			if ( is_array( $corrects ) && isset( $corrects[ $i ] ) ) {
+				$is_correct = 1;
+			} elseif ( ! is_array( $corrects ) && (int) $corrects === $i ) {
 				$is_correct = 1;
 			}
 			$out[] = array(

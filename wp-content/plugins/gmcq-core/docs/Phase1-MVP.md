@@ -32,10 +32,10 @@
 
 ### Categories
 - Deactivate only
-- No soft delete
+- Soft and Hard delete
 
 ### Questions
-- Soft delete
+- Hard delete
 - Category is source of truth
 - Hash duplicate detection
 

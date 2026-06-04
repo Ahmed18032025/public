@@ -444,49 +444,72 @@ function gmcq_activate_category( int $category_id ) {
 }
 
 /**
- * Delete a category by deactivating it (soft delete via is_active = 0).
+ * Permanently delete a category and its subcategories.
  *
- * Categories are never permanently deleted from the database to preserve
- * historical references from questions. This aligns with Phase 1 specification.
+ * Only allowed if the category and all its children are inactive and 
+ * contain no questions.
  *
  * @param int $category_id Category ID.
  * @return bool|\WP_Error True on success, WP_Error on failure.
  */
 function gmcq_delete_category( int $category_id ) {
 	global $wpdb;
+	$table_name = $wpdb->prefix . 'gmcq_categories';
 	
 	$category = gmcq_get_category( $category_id );
 	if ( ! $category ) {
-		return new WP_Error( 'not_found', 'Category not found.' );
+		return new WP_Error( 'not_found', __( 'Category not found.', 'gmcq' ) );
 	}
 	
 	if ( 1 === (int) $category->is_active ) {
-		return new WP_Error( 'active_category', 'Please deactivate first.' );
+		return new WP_Error( 'active_category', __( 'Please deactivate first.', 'gmcq' ) );
 	}
 	
 	if ( (int) $category->question_count > 0 ) {
-		return new WP_Error( 'has_questions', 'Cannot remove category because it has questions.' );
+		return new WP_Error( 'has_questions', __( 'Cannot remove category because it has questions.', 'gmcq' ) );
 	}
 	
-	// Check for active children
-	$children = gmcq_get_categories( array( 'parent_id' => $category_id, 'filter' => 'active' ) );
-	if ( ! empty( $children['categories'] ) ) {
-		$names = array();
-		foreach ( $children['categories'] as $c ) {
-			$names[] = $c->name;
+	// Check for subcategories and their state/questions (Fix for cascading delete and Checklist 8.3)
+	$subcategories = $wpdb->get_results( $wpdb->prepare(
+		"SELECT name, is_active, question_count FROM $table_name WHERE parent_id = %d",
+		$category_id
+	) );
+
+	if ( ! empty( $subcategories ) ) {
+		$active_names = array();
+		$has_questions = false;
+
+		foreach ( $subcategories as $sub ) {
+			if ( 1 === (int) $sub->is_active ) {
+				$active_names[] = $sub->name;
+			}
+			if ( (int) $sub->question_count > 0 ) {
+				$has_questions = true;
+			}
 		}
-		return new WP_Error( 'has_active_children', 'Cannot remove category. Active children: ' . implode( ', ', $names ) );
+
+		if ( ! empty( $active_names ) ) {
+			$names_list = implode( ', ', $active_names );
+			return new WP_Error( 'has_active_children', sprintf( __( 'Cannot remove this category because it has active subcategories: %s. Please deactivate or move them first.', 'gmcq' ), $names_list ) );
+		}
+
+		if ( $has_questions ) {
+			return new WP_Error( 'child_has_questions', __( 'Cannot remove category because one or more subcategories still have questions.', 'gmcq' ) );
+		}
+
+		// Safe to delete subcategories first
+		$wpdb->delete( $table_name, array( 'parent_id' => $category_id ), array( '%d' ) );
 	}
-	
+
 	// Hard delete (only allowed if no questions and no active children)
 	$deleted = $wpdb->delete(
-		$wpdb->prefix . 'gmcq_categories',
+		$table_name,
 		array( 'id' => $category_id ),
 		array( '%d' )
 	);
 	
 	if ( false === $deleted ) {
-		return new WP_Error( 'db_error', 'Database error: ' . $wpdb->last_error );
+		return new WP_Error( 'db_error', __( 'Database error: ', 'gmcq' ) . $wpdb->last_error );
 	}
 	
 	gmcq_clear_dashboard_cache( 'category' );

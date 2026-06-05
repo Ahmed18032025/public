@@ -138,6 +138,11 @@ function gmcq_create_question( array $data ) {
 		return new \WP_Error( 'db_error', 'Database error: ' . $e->getMessage() );
 	}
 
+	// Re-sync category counts now that the new question row exists.
+	if ( ! empty( $data['category_id'] ) ) {
+		gmcq_recalculate_category_count( (int) $data['category_id'] );
+	}
+
 	gmcq_clear_dashboard_cache( 'question' );
 
 	return $question_id;
@@ -160,6 +165,8 @@ function gmcq_update_question( int $question_id, array $data ) {
 	if ( ! $existing ) {
 		return new \WP_Error( 'not_found', 'Question not found.' );
 	}
+
+	$old_category_id = ! empty( $existing->category_id ) ? (int) $existing->category_id : 0;
 
 	$validation = gmcq_validate_question_data( $data, 'update', $question_id );
 	if ( is_wp_error( $validation ) ) {
@@ -243,6 +250,16 @@ function gmcq_update_question( int $question_id, array $data ) {
 		}
 
 		return new \WP_Error( 'db_error', 'Database error: ' . $e->getMessage() );
+	}
+
+	$new_category_id = ! empty( $data['category_id'] ) ? (int) $data['category_id'] : 0;
+	if ( $old_category_id > 0 && $new_category_id > 0 ) {
+		if ( $old_category_id !== $new_category_id ) {
+			gmcq_recalculate_category_count( $old_category_id );
+			gmcq_recalculate_category_count( $new_category_id );
+		} else {
+			gmcq_recalculate_category_count( $new_category_id );
+		}
 	}
 
 	gmcq_clear_dashboard_cache( 'question' );

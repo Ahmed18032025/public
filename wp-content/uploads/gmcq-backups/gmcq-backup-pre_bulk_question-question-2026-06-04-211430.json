@@ -1,0 +1,103 @@
+{
+    "type": "pre_bulk_question",
+    "entity": "question",
+    "timestamp": "2026-06-04 21:14:30",
+    "questions": [
+        {
+            "id": "2",
+            "category_id": "18",
+            "question_text": "<p>Which number is only even prime number?<\/p>",
+            "question_hash": "446246034fd3ce807d8b89590fd40011",
+            "question_type": "mcq_single",
+            "explanation": "<p>2 is the only even prime number.<\/p>",
+            "difficulty": "easy",
+            "marks": "1.00",
+            "negative_marks": "0.25",
+            "is_active": "1",
+            "usage_count": "0",
+            "import_id": null,
+            "created_by": "1",
+            "created_at": "2026-06-05 00:31:04",
+            "updated_at": "2026-06-05 00:31:04",
+            "deleted_at": null,
+            "deleted_by": null
+        },
+        {
+            "id": "3",
+            "category_id": "18",
+            "question_text": "<p>Which is not a prime number ?<\/p>",
+            "question_hash": "e7f0c34604a7b72dd077bd4c2f837bdd",
+            "question_type": "mcq_single",
+            "explanation": "<p>9 = 3x3 which is not a prime as it has more than 2 factors.<\/p>",
+            "difficulty": "easy",
+            "marks": "1.00",
+            "negative_marks": "0.25",
+            "is_active": "1",
+            "usage_count": "0",
+            "import_id": null,
+            "created_by": "1",
+            "created_at": "2026-06-05 02:41:40",
+            "updated_at": "2026-06-05 02:41:40",
+            "deleted_at": null,
+            "deleted_by": null
+        }
+    ],
+    "answers": [
+        {
+            "id": "9",
+            "question_id": "2",
+            "answer_text": "7",
+            "is_correct": "0",
+            "sort_order": "0"
+        },
+        {
+            "id": "10",
+            "question_id": "2",
+            "answer_text": "2",
+            "is_correct": "1",
+            "sort_order": "1"
+        },
+        {
+            "id": "11",
+            "question_id": "2",
+            "answer_text": "3",
+            "is_correct": "0",
+            "sort_order": "2"
+        },
+        {
+            "id": "12",
+            "question_id": "2",
+            "answer_text": "4",
+            "is_correct": "0",
+            "sort_order": "3"
+        },
+        {
+            "id": "17",
+            "question_id": "3",
+            "answer_text": "2",
+            "is_correct": "0",
+            "sort_order": "0"
+        },
+        {
+            "id": "18",
+            "question_id": "3",
+            "answer_text": "3",
+            "is_correct": "0",
+            "sort_order": "1"
+        },
+        {
+            "id": "19",
+            "question_id": "3",
+            "answer_text": "5",
+            "is_correct": "0",
+            "sort_order": "2"
+        },
+        {
+            "id": "20",
+            "question_id": "3",
+            "answer_text": "9",
+            "is_correct": "1",
+            "sort_order": "3"
+        }
+    ]
+}

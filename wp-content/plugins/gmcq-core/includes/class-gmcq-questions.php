@@ -358,6 +358,14 @@ function gmcq_delete_question_permanently( int $question_id ) {
 
 	$p = $wpdb->prefix;
 
+	// Identify affected quizzes BEFORE deleting from the mapping table.
+	$affected_quizzes = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT DISTINCT quiz_id FROM {$p}gmcq_question_map WHERE question_id = %d",
+			$question_id
+		)
+	);
+
 	$wpdb->query( 'START TRANSACTION' );
 
 	try {
@@ -385,13 +393,6 @@ function gmcq_delete_question_permanently( int $question_id ) {
 		return new \WP_Error( 'db_error', 'Database error: ' . $e->getMessage() );
 	}
 
-	// Recalculate usage counts for affected quizzes (those that had this question)
-	$affected_quizzes = $wpdb->get_col(
-		$wpdb->prepare(
-			"SELECT DISTINCT quiz_id FROM {$p}gmcq_quizzes_meta WHERE is_active = 1"
-		)
-	);
-	// Note: We just do a global recalc; cheap with idx.
 	gmcq_recalculate_usage_counts();
 
 	foreach ( $affected_quizzes as $quiz_id ) {
@@ -1275,7 +1276,7 @@ function gmcq_render_questions_page(): void {
 				<a href="<?php echo esc_url( $list_url . '&filter=' . $filter ); ?>" class="button"><?php esc_html_e( 'Reset', 'gmcq' ); ?></a>
 			</form>
 			<form id="gmcq-bulk-form" method="post">
-				<?php wp_nonce_field( 'gmcq_question_nonce' ); ?>
+				<?php wp_nonce_field( 'gmcq_question_nonce', '_ajax_nonce' ); ?>
 				<table class="wp-list-table widefat fixed striped" style="margin-top:15px">
 					<thead>
 						<tr>
@@ -1372,7 +1373,7 @@ function gmcq_render_questions_page(): void {
 			var ids = $('.gmcq-cb:checked').map(function(){ return parseInt(this.value); }).get();
 			var action = $('#gmcq-bulk-action').val();
 			if (!action || ids.length === 0) { notice('Please select an action and at least one question', true); return; }
-			if (action === 'delete' && !confirm('<?php echo esc_js( __( 'Soft-delete ' + ids.length + ' selected question(s)?', 'gmcq' ) ); ?>'.replace('+ ids.length +', ids.length))) return;
+			if (action === 'delete' && !confirm('<?php echo esc_js( __( 'Soft-delete %s selected question(s)?', 'gmcq' ) ); ?>'.replace('%s', ids.length))) return;
 			$.post(gmcqAdmin.ajaxUrl, {action: 'gmcq_bulk_questions', bulk_action: action, ids: ids, _ajax_nonce: nonce}, function(r){
 				if (r.success) { notice('Done: ' + r.data.success + ' succeeded'); setTimeout(function(){ location.reload(); }, 1000); }
 				else { notice(r.data.message || 'Error', true); }
@@ -1463,7 +1464,7 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 		<div class="gmcq-card" style="max-width:900px">
 			<form id="gmcq-question-form" method="post">
 				<input type="hidden" name="id" value="<?php echo (int) $question_id; ?>">
-				<?php wp_nonce_field( 'gmcq_question_nonce' ); ?>
+				<?php wp_nonce_field( 'gmcq_question_nonce', '_ajax_nonce' ); ?>
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="gmcq-q-category"><?php esc_html_e( 'Category', 'gmcq' ); ?> <span style="color:red">*</span></label></th>

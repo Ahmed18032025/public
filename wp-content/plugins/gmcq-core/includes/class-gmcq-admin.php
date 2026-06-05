@@ -10,10 +10,10 @@ function gmcq_register_admin_menus(): void {
 	add_submenu_page('gmcq-dashboard',__( 'GMCQ Dashboard', 'gmcq' ),__( 'Dashboard', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page');
 	add_submenu_page('gmcq-dashboard',__( 'Categories', 'gmcq' ),__( 'Categories', 'gmcq' ),'manage_gmcq','gmcq-categories','gmcq_render_categories_page');
 add_submenu_page('gmcq-dashboard',__( 'Questions', 'gmcq' ),__( 'Questions', 'gmcq' ),'manage_gmcq','gmcq-questions','gmcq_render_questions_page');
-	add_submenu_page('gmcq-dashboard',__( 'Quizzes', 'gmcq' ),__( 'Quizzes', 'gmcq' ),'manage_gmcq','gmcq-quizzes','gmcq_render_quizzes_placeholder');
-	add_submenu_page('gmcq-dashboard',__( 'CSV Import', 'gmcq' ),__( 'CSV Import', 'gmcq' ),'manage_gmcq','gmcq-import','gmcq_render_import_placeholder');
-	add_submenu_page('gmcq-dashboard',__( 'Reports', 'gmcq' ),__( 'Reports', 'gmcq' ),'manage_gmcq','gmcq-reports','gmcq_render_reports_placeholder');
-	add_submenu_page('gmcq-dashboard',__( 'Settings', 'gmcq' ),__( 'Settings', 'gmcq' ),'manage_gmcq','gmcq-settings','gmcq_render_settings_placeholder');
+	add_submenu_page('gmcq-dashboard',__( 'Quizzes', 'gmcq' ),__( 'Quizzes', 'gmcq' ),'manage_gmcq','gmcq-quizzes','gmcq_render_quizzes_page');
+	add_submenu_page('gmcq-dashboard',__( 'CSV Import', 'gmcq' ),__( 'CSV Import', 'gmcq' ),'manage_gmcq','gmcq-import','gmcq_render_import_page');
+	add_submenu_page('gmcq-dashboard',__( 'Reports', 'gmcq' ),__( 'Reports', 'gmcq' ),'manage_gmcq','gmcq-reports','gmcq_render_reports_page');
+	add_submenu_page('gmcq-dashboard',__( 'Settings', 'gmcq' ),__( 'Settings', 'gmcq' ),'manage_gmcq','gmcq-settings','gmcq_render_settings_page');
 }
 add_action('admin_menu','gmcq_register_admin_menus');
 
@@ -37,24 +37,14 @@ function gmcq_create_assets_dir():void{
 }
 add_action('admin_init','gmcq_create_assets_dir');
 
-function gmcq_render_dashboard_page():void{
-	if(!current_user_can('manage_gmcq'))wp_die(esc_html__('You do not have permission to access this page.','gmcq'));
-	$v=GMCQ_VERSION;$db=get_option('gmcq_db_version','0');$s=get_option('gmcq_settings',array());
-	?><div class="wrap gmcq-dashboard-wrap"><h1><span class="dashicons dashicons-analytics" style="font-size:30px;margin-right:8px"></span><?php esc_html_e('GMCQ Quiz Engine','gmcq');?></h1>
-	<p class="description"><?php printf(esc_html__('Version %s — MCQ Quiz Management System for WordPress','gmcq'),esc_html($v));?></p>
-	<div class="gmcq-card"><h2><?php esc_html_e('System Status','gmcq');?></h2>
-	<table class="widefat" style="max-width:600px"><tbody>
-	<tr><td><strong><?php esc_html_e('Plugin Version','gmcq');?></strong></td><td><span class="gmcq-status-ok"><?php echo esc_html($v);?></span></td></tr>
-	<tr><td><strong><?php esc_html_e('Database Version','gmcq');?></strong></td><td><span class="gmcq-status-ok"><?php echo esc_html($db);?></span></td></tr>
-	<tr><td><strong><?php esc_html_e('Database Tables','gmcq');?></strong></td><td><span class="gmcq-status-ok"><?php printf(esc_html__('%d tables defined','gmcq'),count(gmcq_get_schema_contract()));?></span></td></tr>
-	<tr><td><strong><?php esc_html_e('Settings','gmcq');?></strong></td><td><?php if(!empty($s)):?><span class="gmcq-status-ok"><?php esc_html_e('Configured','gmcq');?></span><?php else:?><span class="gmcq-status-warning"><?php esc_html_e('Using defaults','gmcq');?></span><?php endif;?></td></tr>
-	</tbody></table></div>
-	<div class="gmcq-card"><h2><?php esc_html_e('Quick Start','gmcq');?></h2>
-	<ol><li><a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-categories'));?>"><?php esc_html_e('Create Categories','gmcq');?></a> — <?php esc_html_e('Organize questions into categories (2-level hierarchy)','gmcq');?></li>
-	<li><a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-questions'));?>"><?php esc_html_e('Add Questions','gmcq');?></a> — <?php esc_html_e('Create MCQ questions with explanations','gmcq');?></li>
-	<li><a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-quizzes'));?>"><?php esc_html_e('Create Quizzes','gmcq');?></a> — <?php esc_html_e('Build quizzes with question sets','gmcq');?></li>
-	<li><a href="<?php echo esc_url(admin_url('admin.php?page=gmcq-reports'));?>"><?php esc_html_e('View Reports','gmcq');?></a> — <?php esc_html_e('Track quiz performance and results','gmcq');?></li>
-	</ol></div></div><?php
+function gmcq_render_dashboard_page(): void {
+	if ( function_exists( 'gmcq_render_full_dashboard_page' ) ) {
+		gmcq_render_full_dashboard_page();
+		return;
+	}
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_die( esc_html__( 'You do not have permission to access this page.', 'gmcq' ) );
+	}
 }
 
 function gmcq_render_categories_page():void{
@@ -237,16 +227,3 @@ function gmcq_render_category_edit_form(int $category_id):void{
 	});
 	</script><?php
 }
-
-function gmcq_render_placeholder_page(string $s):void{
-	if(!current_user_can('manage_gmcq'))wp_die(esc_html__('You do not have permission to access this page.','gmcq'));
-	?><div class="wrap gmcq-dashboard-wrap"><h1><?php printf('<a href="%s">%s</a> &rsaquo; %s',esc_url(admin_url('admin.php?page=gmcq-dashboard')),esc_html__('GMCQ','gmcq'),esc_html($s));?></h1>
-	<div class="gmcq-card" style="text-align:center;padding:60px"><span class="dashicons dashicons-clipboard" style="font-size:48px;color:#999"></span>
-	<h2 style="margin-top:15px;color:#666"><?php printf(esc_html__('%s — Coming Soon','gmcq'),esc_html($s));?></h2>
-	<p style="color:#999"><?php esc_html_e('This section is under development and will be available in a future update.','gmcq');?></p></div></div><?php
-}
-function gmcq_render_questions_placeholder():void{gmcq_render_placeholder_page(__('Questions','gmcq'));}
-function gmcq_render_quizzes_placeholder():void{gmcq_render_placeholder_page(__('Quizzes','gmcq'));}
-function gmcq_render_import_placeholder():void{gmcq_render_placeholder_page(__('CSV Import','gmcq'));}
-function gmcq_render_reports_placeholder():void{gmcq_render_placeholder_page(__('Reports','gmcq'));}
-function gmcq_render_settings_placeholder():void{gmcq_render_placeholder_page(__('Settings','gmcq'));}

@@ -604,28 +604,31 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 
 	var get_window_width = function () {
 
-		return document.documentElement.clientWidth;
+		return window.innerWidth;
 	}
 
 	/* Add break point Class and related trigger */
 	var updateHeaderBreakPoint = function () {
 
-		// Use clientWidth directly. The overflow:hidden trick previously used here
-		// caused a visible content jump (scrollbar flash) after the breakpoint class
-		// was pre-applied by the early inline script in wp_body_open. Since
-		// document.documentElement.clientWidth is not affected by content overflow
-		// (unlike window.innerWidth), the overflow manipulation is not needed.
 		var ww = get_window_width();
 
 		var break_point = astra.break_point;
 
 		/**
-		 * This case is when one hits a URL one after the other via `Open in New Tab` option
-		 * Chrome returns the value of outer width as 0 in this case.
-		 * This mis-calculates the width of the window and header seems invisible.
-		 * This could be fixed by using `0 === ww` condition below.
+		 * Use matchMedia to evaluate the breakpoint using the same CSS engine that
+		 * evaluates media queries. This guarantees JS and CSS always agree on which
+		 * header should be visible, eliminating any sub-pixel or scrollbar-width
+		 * mismatch between window.innerWidth and the actual CSS viewport width.
+		 *
+		 * The 0.99 offset mirrors the max-width: (break_point + 0.99)px rule used
+		 * in the PHP dynamic CSS, so the transition point is identical in both.
+		 *
+		 * The 0 === ww guard handles a Chrome edge case where innerWidth returns 0
+		 * when opening a URL via "Open in New Tab" — force desktop mode in that case.
 		 */
-		if (ww > break_point || 0 === ww) {
+		var isMobile = window.matchMedia( '(max-width: ' + ( parseFloat( break_point ) + 0.99 ) + 'px)' ).matches;
+
+		if ( ! isMobile || 0 === ww ) {
 			//remove menu toggled class.
 			if ( menu_toggle_all.length > 0 ) {
 

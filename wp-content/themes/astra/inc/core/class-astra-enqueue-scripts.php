@@ -64,7 +64,7 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 			$break_point = astra_header_break_point();
 			?>
 			<script>
-			(function(){var w=document.documentElement.clientWidth;if(w>0&&w<=<?php echo absint( $break_point ); ?>){document.body.classList.add('ast-header-break-point');document.body.classList.remove('ast-desktop');}})();
+			(function(){if(window.matchMedia('(max-width:<?php echo number_format( absint( $break_point ) + 0.99, 2, '.', '' ); ?>px)').matches){document.body.classList.add('ast-header-break-point');document.body.classList.remove('ast-desktop');}})();
 			</script>
 			<?php
 		}

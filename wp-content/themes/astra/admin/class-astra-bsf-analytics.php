@@ -738,6 +738,19 @@ class Astra_BSF_Analytics {
 				true
 			);
 		}
+
+		// AI Assistant toggle.
+		$old_show_ai_assistant = ! isset( $old_value['show_ai_assistant'] ) ? true : ! empty( $old_value['show_ai_assistant'] );
+		$new_show_ai_assistant = ! isset( $new_value['show_ai_assistant'] ) ? true : ! empty( $new_value['show_ai_assistant'] );
+
+		if ( $old_show_ai_assistant !== $new_show_ai_assistant ) {
+			self::$events->track(
+				'ai_assistant_toggled',
+				ASTRA_THEME_VERSION,
+				array( 'enabled' => $new_show_ai_assistant ? 'yes' : 'no' ),
+				true
+			);
+		}
 	}
 
 	/**

@@ -1,5 +1,14 @@
 *** Astra Changelog ***
 
+2026-06-02 - version 4.13.4
+* New: Added a "Show AI Assistant" toggle in Dashboard Settings to allow users to show or hide the AI Assistant icon from the Astra Dashboard.
+* Fix: Resolved dual header display and header button visibility issues at the mobile/desktop breakpoint.
+* Fix: Accessibility outline toggle not working correctly after importing Astra settings, causing focus outline to persist when disabled or not appear when enabled.
+* Fix: Elementor button hover color overridden by :visited rule due to CSS output order in Astra's inline styles.
+* Fix: Astra's admin scripts no longer override the native window.open globally, preventing conflicts with third-party plugins like WooCommerce.
+* Fix: Prevented PHP fatal in webfont and docs filesystem helpers when running on FTP-based hosts without WordPress credentials.
+* Fix: Customizer controls crashing with TypeError when SVG icons had not finished loading.
+
 2026-05-20 - version 4.13.3
 * New: Added PowerfulDocs AI support widget to the Astra admin dashboard — accessible via the floating Astra icon.
 * Improvement: Compatibility with WordPress 7.0.

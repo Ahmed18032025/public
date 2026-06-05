@@ -1,0 +1,57 @@
+.gmcq-quiz-wrap {
+	max-width: 800px;
+	margin: 20px auto;
+	padding: 20px;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.gmcq-btn {
+	padding: 8px 16px;
+	margin: 4px;
+	cursor: pointer;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.gmcq-btn-primary {
+	background: #2271b1;
+	color: #fff;
+	border: none;
+}
+
+.gmcq-answer-option {
+	display: block;
+	padding: 10px 12px;
+	margin: 6px 0;
+	border: 1px solid #eee;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.gmcq-answer-option:hover {
+	background: #f9f9f9;
+}
+
+.gmcq-q-text {
+	margin: 12px 0;
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.gmcq-q-number {
+	font-size: 13px;
+	color: #666;
+	margin-bottom: 8px;
+}
+
+.gmcq-quiz-meta {
+	margin-bottom: 16px;
+	color: #666;
+}
+
+.gmcq-quiz-meta span {
+	margin-right: 16px;
+}

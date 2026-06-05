@@ -1372,7 +1372,7 @@ function gmcq_render_questions_page(): void {
 			var ids = $('.gmcq-cb:checked').map(function(){ return parseInt(this.value); }).get();
 			var action = $('#gmcq-bulk-action').val();
 			if (!action || ids.length === 0) { notice('Please select an action and at least one question', true); return; }
-			if (action === 'delete' && !confirm('<?php echo esc_js( __( 'Soft-delete ' + ids.length + ' selected question(s)?', 'gmcq' ) ); ?>'.replace('+ ids.length +', ids.length))) return;
+			if (action === 'delete' && !confirm(<?php echo wp_json_encode( __( 'Soft-delete %d selected question(s)?', 'gmcq' ) ); ?>.replace('%d', String(ids.length)))) return;
 			$.post(gmcqAdmin.ajaxUrl, {action: 'gmcq_bulk_questions', bulk_action: action, ids: ids, _ajax_nonce: nonce}, function(r){
 				if (r.success) { notice('Done: ' + r.data.success + ' succeeded'); setTimeout(function(){ location.reload(); }, 1000); }
 				else { notice(r.data.message || 'Error', true); }

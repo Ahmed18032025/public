@@ -83,6 +83,48 @@ class Astra_Menu {
 	}
 
 	/**
+	 * Enqueue pricing intent tracking script on all admin and customizer pages.
+	 *
+	 * Uses an anchor click listener (capture phase) and a custom DOM event listener
+	 * so third-party plugins are not affected. No window.open override.
+	 *
+	 * @since 4.13.4
+	 * @return void
+	 */
+	public function enqueue_pricing_intent_script() {
+		if ( defined( 'ASTRA_EXT_VER' ) ) {
+			return;
+		}
+
+		$script = <<<'JS'
+			(function () {
+				var KEY     = 'astraPricingVisited';
+				var PATTERN = 'wpastra.com/pricing';
+
+				function astraMarkPricingIntent() {
+					var expires = new Date( Date.now() + 86400000 ).toUTCString();
+					document.cookie = KEY + '=1; expires=' + expires + '; path=/; SameSite=Strict';
+					window.dispatchEvent( new CustomEvent( 'astraPricingIntent' ) );
+				}
+
+				/* Fired by Astra's own JS before programmatic window.open() calls to pricing pages */
+				document.addEventListener( 'astraPricingLinkOpen', astraMarkPricingIntent );
+
+				/* Intercept anchor clicks; capture phase catches React synthetic events too */
+				document.addEventListener( 'click', function ( e ) {
+					var el = e.target && e.target.closest( 'a[href]' );
+					if ( el && el.href && el.href.indexOf( PATTERN ) !== -1 ) {
+						astraMarkPricingIntent();
+					}
+				}, true );
+			}());
+			JS;
+
+		$handle = doing_action( 'customize_controls_enqueue_scripts' ) ? 'customize-controls' : 'jquery';
+		wp_add_inline_script( $handle, $script );
+	}
+
+	/**
 	 * Add Astra~Woo Suggestions plugin tab link.
 	 *
 	 * @param array $tabs Plugin tabs.
@@ -145,58 +187,6 @@ class Astra_Menu {
 			add_action( 'admin_enqueue_scripts', array( $this, 'styles_scripts' ) );
 			add_filter( 'admin_footer_text', array( $this, 'astra_admin_footer_link' ), 99 );
 		}
-	}
-
-	/**
-	 * Enqueue an inline script that sets a sessionStorage flag whenever
-	 * the user opens any wpastra.com/pricing link — via window.open() or a plain anchor.
-	 * Skipped when Astra Pro is already active (no nudge needed).
-	 *
-	 * Hooked to admin_enqueue_scripts (restricted to Astra dashboard and post editor pages)
-	 * and customize_controls_enqueue_scripts for Customizer coverage.
-	 *
-	 * @since 4.13.0
-	 * @return void
-	 */
-	public function enqueue_pricing_intent_script() {
-		if ( defined( 'ASTRA_EXT_VER' ) ) {
-			return;
-		}
-
-		$script = <<<'JS'
-(function () {
-	const KEY = 'astraPricingVisited';
-	const PATTERN = 'wpastra.com/pricing';
-
-	function markPricingIntent() {
-		const expires = new Date( Date.now() + 86400000 ).toUTCString();
-		document.cookie = KEY + '=1; expires=' + expires + '; path=/; SameSite=Strict';
-		window.dispatchEvent( new CustomEvent( 'astraPricingIntent' ) );
-	}
-
-	/* Intercept window.open() calls */
-	const _open = window.open;
-	window.open = function ( url ) {
-		if ( url && url.indexOf( PATTERN ) !== -1 ) {
-			markPricingIntent();
-		}
-		return _open.apply( this, arguments );
-	};
-
-	/* Intercept anchor clicks (capture phase catches React synthetic events too) */
-	document.addEventListener( 'click', function ( e ) {
-		const el = e.target && e.target.closest( 'a[href]' );
-		if ( el && el.href && el.href.indexOf( PATTERN ) !== -1 ) {
-			markPricingIntent();
-		}
-	}, true );
-}());
-JS;
-
-		// Attach to a guaranteed-present handle so WordPress always outputs the inline script.
-		// customize-controls is available on the customizer page; jquery covers all admin pages.
-		$handle = doing_action( 'customize_controls_enqueue_scripts' ) ? 'customize-controls' : 'jquery';
-		wp_add_inline_script( $handle, $script );
 	}
 
 	/**
@@ -450,6 +440,8 @@ JS;
 			'application_passwords_url' => admin_url( 'profile.php#application-passwords-section' ),
 			'is_mcp_adapter_active'     => class_exists( 'WP\MCP\Plugin' ),
 			'site_builder_url'          => esc_url( admin_url( 'admin.php?page=theme-builder-free' ) ),
+			'show_learn_tab'            => Astra_API_Init::get_admin_settings_option( 'show_learn_tab', true ),
+			'show_ai_assistant'         => Astra_API_Init::get_admin_settings_option( 'show_ai_assistant', true ),
 		);
 
 		$this->settings_app_scripts( apply_filters( 'astra_react_admin_localize', $localize ) );

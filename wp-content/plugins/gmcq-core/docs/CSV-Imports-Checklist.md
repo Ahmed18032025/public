@@ -1,9 +1,9 @@
 ## CSV Import Testing Checklist
 
 ### 1. Admin page access
-- [ ] Go to **WP Admin → GMCQ → CSV Import**.
-- [ ] Confirm the page loads without fatal errors.
-- [ ] Confirm you see:
+- [✅] Go to **WP Admin → GMCQ → CSV Import**.
+- [✅] Confirm the page loads without fatal errors.
+- [✅] Confirm you see:
   - Upload CSV form
   - Target Category dropdown
   - Assign to Quiz dropdown
@@ -22,7 +22,7 @@ Which are prime numbers?,2,3,4,6,A,B,"2 and 3 are prime",medium,2,0.5,mcq_multip
 > If you leave `category_slug` empty, choose a valid **leaf category** in the Target Category dropdown.
 
 ### 3. Upload + preview validation
-- [ ] Upload the CSV.
+- [✅] Upload the CSV.
 - [ ] Select a leaf Target Category.
 - [ ] Optionally select a quiz.
 - [ ] Click **Validate & Preview**.

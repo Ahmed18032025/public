@@ -229,8 +229,10 @@ function gmcq_get_quizzes( array $args = array() ): array {
 	}
 
 	if ( ! empty( $args['search'] ) ) {
-		$where[]   = 'p.post_title LIKE %s';
-		$prepare[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+		$like      = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+		$where[]   = '(p.post_title LIKE %s OR p.post_name LIKE %s)';
+		$prepare[] = $like;
+		$prepare[] = $like;
 	}
 
 	$where_clause = implode( ' AND ', $where );
@@ -247,9 +249,10 @@ function gmcq_get_quizzes( array $args = array() ): array {
 
 	$rows = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT zm.*, p.post_title, p.post_status
+			"SELECT zm.*, p.post_title, p.post_status, c.name AS category_name
 			 FROM {$p}gmcq_quizzes_meta zm
 			 JOIN {$wpdb->posts} p ON p.ID = zm.quiz_id
+			 LEFT JOIN {$p}gmcq_categories c ON c.id = zm.category_id
 			 WHERE {$where_clause}
 			 ORDER BY zm.updated_at DESC
 			 LIMIT %d OFFSET %d",
@@ -459,13 +462,28 @@ function gmcq_ajax_search_questions_for_quiz(): void {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'gmcq' ) ) );
 	}
 	$q = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
-	$result = gmcq_search_questions(
-		array(
-			'query'    => $q,
-			'filter'   => 'active',
-			'per_page' => 20,
-		)
+	$category_id   = isset( $_GET['category_id'] ) ? (int) $_GET['category_id'] : 0;
+	$difficulty    = isset( $_GET['difficulty'] ) ? sanitize_text_field( wp_unslash( $_GET['difficulty'] ) ) : '';
+	$question_type = isset( $_GET['question_type'] ) ? sanitize_text_field( wp_unslash( $_GET['question_type'] ) ) : '';
+	$recent        = ! empty( $_GET['recent'] );
+
+	$search_args = array(
+		'filter'        => 'active',
+		'category_id'   => $category_id,
+		'difficulty'    => $difficulty,
+		'question_type' => $question_type,
+		'per_page'      => 20,
 	);
+
+	if ( $recent ) {
+		$search_args['query']  = '';
+		$search_args['filter'] = 'all';
+		$search_args['page']   = 1;
+	} else {
+		$search_args['query'] = $q;
+	}
+
+	$result = gmcq_search_questions( $search_args );
 	wp_send_json_success( $result );
 }
 
@@ -505,13 +523,14 @@ function gmcq_render_quizzes_page(): void {
 			<table class="wp-list-table widefat fixed striped">
 				<thead><tr>
 					<th><?php esc_html_e( 'Title', 'gmcq' ); ?></th>
-					<th><?php esc_html_e( 'Status', 'gmcq' ); ?></th>
+					<th><?php esc_html_e( 'Category', 'gmcq' ); ?></th>
 					<th><?php esc_html_e( 'Questions', 'gmcq' ); ?></th>
 					<th><?php esc_html_e( 'Attempts', 'gmcq' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'gmcq' ); ?></th>
 				</tr></thead>
 				<tbody>
 				<?php if ( empty( $data['quizzes'] ) ) : ?>
-					<tr><td colspan="4"><?php esc_html_e( 'No quizzes found.', 'gmcq' ); ?></td></tr>
+					<tr><td colspan="5"><?php esc_html_e( 'No quizzes found.', 'gmcq' ); ?></td></tr>
 				<?php else : foreach ( $data['quizzes'] as $quiz ) : ?>
 					<tr>
 						<td>
@@ -525,9 +544,10 @@ function gmcq_render_quizzes_page(): void {
 								<?php endif; ?>
 							</div>
 						</td>
-						<td><?php echo esc_html( $quiz->status ); ?><?php echo 0 === (int) $quiz->is_active ? ' (' . esc_html__( 'archived', 'gmcq' ) . ')' : ''; ?></td>
+						<td><?php echo ! empty( $quiz->category_name ) ? esc_html( $quiz->category_name ) : '<em>' . esc_html__( 'None', 'gmcq' ) . '</em>'; ?></td>
 						<td><?php echo (int) $quiz->question_count; ?></td>
 						<td><?php echo (int) $quiz->attempt_count; ?></td>
+						<td><?php echo 0 === (int) $quiz->is_active ? '<span class="gmcq-status-inactive">' . esc_html__( 'Archived', 'gmcq' ) . '</span>' : '<span class="gmcq-status-ok">' . esc_html( ucfirst( $quiz->status ) ) . '</span>'; ?></td>
 					</tr>
 				<?php endforeach; endif; ?>
 				</tbody>
@@ -632,22 +652,53 @@ function gmcq_render_quiz_questions_page( int $quiz_id ): void {
 	$assigned_ids = wp_list_pluck( $assigned, 'question_id' );
 	$base = admin_url( 'admin.php?page=gmcq-quizzes' );
 	$nonce = wp_create_nonce( 'gmcq_quiz_nonce' );
+	$cats = gmcq_get_categories( array( 'filter' => 'active', 'per_page' => -1 ) );
+	$cat_list = $cats['categories'];
 	?>
 	<div class="wrap gmcq-dashboard-wrap">
-		<h1><?php echo esc_html( $post->post_title ); ?> — <?php esc_html_e( 'Questions', 'gmcq' ); ?></h1>
+		<h1><?php echo esc_html( $post->post_title ); ?> — <?php esc_html_e( 'Manage Questions', 'gmcq' ); ?></h1>
 		<div class="gmcq-card">
-			<p><input type="search" id="gmcq-q-search" placeholder="<?php esc_attr_e( 'Search questions to add...', 'gmcq' ); ?>" style="width:300px">
-			<button type="button" class="button" id="gmcq-q-search-btn"><?php esc_html_e( 'Search', 'gmcq' ); ?></button></p>
-			<div id="gmcq-search-results"></div>
-			<h3><?php esc_html_e( 'Assigned Questions', 'gmcq' ); ?> (<?php echo count( $assigned ); ?>)</h3>
-			<ul id="gmcq-assigned-list">
+			<div class="gmcq-card" style="background:#f9f9f9;border:1px solid #ddd;padding:15px;margin-bottom:15px">
+				<h3 style="margin-top:0;margin-bottom:12px"><?php esc_html_e( 'Search Questions to Add', 'gmcq' ); ?></h3>
+				<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+					<input type="search" id="gmcq-q-search" placeholder="<?php esc_attr_e( 'Search by title or slug...', 'gmcq' ); ?>" style="min-width:240px;flex:1">
+					<select id="gmcq-q-category" style="min-width:160px">
+						<option value="0"><?php esc_html_e( 'All Categories', 'gmcq' ); ?></option>
+						<?php foreach ( $cat_list as $c ) : ?>
+							<option value="<?php echo (int) $c->id; ?>"><?php echo esc_html( $c->name ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<select id="gmcq-q-difficulty" style="min-width:120px">
+						<option value=""><?php esc_html_e( 'All Difficulty', 'gmcq' ); ?></option>
+						<option value="easy"><?php esc_html_e( 'Easy', 'gmcq' ); ?></option>
+						<option value="medium"><?php esc_html_e( 'Medium', 'gmcq' ); ?></option>
+						<option value="hard"><?php esc_html_e( 'Hard', 'gmcq' ); ?></option>
+					</select>
+					<select id="gmcq-q-type" style="min-width:140px">
+						<option value=""><?php esc_html_e( 'All Types', 'gmcq' ); ?></option>
+						<option value="mcq_single"><?php esc_html_e( 'MCQ Single', 'gmcq' ); ?></option>
+						<option value="mcq_multiple"><?php esc_html_e( 'MCQ Multiple', 'gmcq' ); ?></option>
+						<option value="true_false"><?php esc_html_e( 'True/False', 'gmcq' ); ?></option>
+					</select>
+					<button type="button" class="button" id="gmcq-q-search-btn"><?php esc_html_e( 'Search', 'gmcq' ); ?></button>
+					<button type="button" class="button" id="gmcq-q-search-recent"><?php esc_html_e( 'Recent Questions', 'gmcq' ); ?></button>
+					<a href="<?php echo esc_url( $base . '&action=questions&id=' . $quiz_id ); ?>" class="button"><?php esc_html_e( 'Reset Filters', 'gmcq' ); ?></a>
+				</div>
+				<div id="gmcq-search-results" style="margin-top:12px"></div>
+			</div>
+			<h3><?php esc_html_e( 'Assigned Questions', 'gmcq' ); ?> (<span id="gmcq-assigned-count"><?php echo count( $assigned ); ?></span>)</h3>
+			<ul id="gmcq-assigned-list" style="list-style:none;margin:0 0 20px;padding:0;max-height:300px;overflow-y:auto;border:1px solid #ddd;background:#fff">
 				<?php foreach ( $assigned as $q ) : ?>
-					<li data-id="<?php echo (int) $q->question_id; ?>"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $q->question_text ), 15 ) ); ?>
-					<button type="button" class="button-link gmcq-remove-q" data-id="<?php echo (int) $q->question_id; ?>"><?php esc_html_e( 'Remove', 'gmcq' ); ?></button></li>
+					<li data-id="<?php echo (int) $q->question_id; ?>" style="padding:10px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+						<span style="flex:1;margin-right:10px"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $q->question_text ), 15 ) ); ?></span>
+						<button type="button" class="button-link gmcq-remove-q" data-id="<?php echo (int) $q->question_id; ?>" style="color:#dc3232"><?php esc_html_e( 'Remove', 'gmcq' ); ?></button>
+					</li>
 				<?php endforeach; ?>
 			</ul>
-			<p><button type="button" class="button button-primary" id="gmcq-save-questions"><?php esc_html_e( 'Save Question Order', 'gmcq' ); ?></button>
-			<a href="<?php echo esc_url( $base ); ?>" class="button"><?php esc_html_e( 'Back', 'gmcq' ); ?></a></p>
+			<p style="margin-top:15px">
+				<button type="button" class="button button-primary button-large" id="gmcq-save-questions"><?php esc_html_e( 'Save Question Order', 'gmcq' ); ?></button>
+				<a href="<?php echo esc_url( $base ); ?>" class="button button-large" style="margin-left:10px"><?php esc_html_e( 'Back to Quizzes', 'gmcq' ); ?></a>
+			</p>
 		</div>
 	</div>
 	<script>
@@ -656,6 +707,54 @@ function gmcq_render_quiz_questions_page( int $quiz_id ): void {
 		var quizId = <?php echo (int) $quiz_id; ?>;
 		var ids = <?php echo wp_json_encode( array_map( 'intval', $assigned_ids ) ); ?>;
 
+		function doSearch(params){
+			$.get(gmcqAdmin.ajaxUrl, $.extend({
+				action: 'gmcq_search_questions_for_quiz',
+				q: $('#gmcq-q-search').val(),
+				_ajax_nonce: nonce
+			}, params || {}), function(r){
+				var html = '';
+				if (r.success && r.data.results) {
+					r.data.results.forEach(function(item){
+						if (ids.indexOf(parseInt(item.id)) >= 0) return;
+						html += '<div style="padding:8px 10px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">' +
+							'<span style="flex:1;margin-right:10px;font-size:14px">' +
+							$('<span>').text(item.question_text.replace(/<[^>]+>/g,'').substring(0,70)).html() +
+							(item.category_name ? ' <small style="color:#999">['+$('<span>').text(item.category_name).html()+']</small>' : '') +
+							'</span>' +
+							'<button type="button" class="button button-small gmcq-add-q" data-id="'+item.id+'">Add</button></div>';
+					});
+				}
+				$('#gmcq-search-results').html(html || '<p style="color:#999;padding:10px"><?php esc_html_e( 'No results found.', 'gmcq' ); ?></p>');
+			});
+		}
+
+		$('#gmcq-q-search-btn').on('click', function(){
+			doSearch({
+				category_id: parseInt($('#gmcq-q-category').val()) || 0,
+				difficulty: $('#gmcq-q-difficulty').val(),
+				question_type: $('#gmcq-q-type').val()
+			});
+		});
+		$('#gmcq-q-search-recent').on('click', function(){
+			doSearch({recent: 1, q: '', category_id: 0, difficulty: '', question_type: ''});
+		});
+		$('#gmcq-q-search').on('keypress', function(e){
+			if (e.which === 13) { e.preventDefault(); $('#gmcq-q-search-btn').click(); }
+		});
+		$('#gmcq-search-results').on('click', '.gmcq-add-q', function(){
+			var id = parseInt($(this).data('id'));
+			if (ids.indexOf(id) < 0) ids.push(id);
+			$(this).closest('div').remove();
+			$('#gmcq-assigned-list').append('<li data-id="'+id+'" style="padding:10px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center"><span style="flex:1;margin-right:10px">Question #'+id+'</span><button type="button" class="button-link gmcq-remove-q" data-id="'+id+'" style="color:#dc3232"><?php esc_html_e( 'Remove', 'gmcq' ); ?></button></li>');
+			$('#gmcq-assigned-count').text(ids.length);
+		});
+		$('#gmcq-assigned-list').on('click', '.gmcq-remove-q', function(){
+			var id = parseInt($(this).data('id'));
+			ids = ids.filter(function(x){ return x !== id; });
+			$(this).closest('li').remove();
+			$('#gmcq-assigned-count').text(ids.length);
+		});
 		function save(){
 			$.post(gmcqAdmin.ajaxUrl, {action:'gmcq_set_quiz_questions', quiz_id: quizId, question_ids: ids, _ajax_nonce: nonce}, function(r){
 				alert(r.success ? r.data.message : (r.data.message || 'Error'));
@@ -663,30 +762,6 @@ function gmcq_render_quiz_questions_page( int $quiz_id ): void {
 			});
 		}
 		$('#gmcq-save-questions').on('click', save);
-		$('#gmcq-q-search-btn').on('click', function(){
-			var q = $('#gmcq-q-search').val();
-			$.get(gmcqAdmin.ajaxUrl, {action:'gmcq_search_questions_for_quiz', q: q, _ajax_nonce: nonce}, function(r){
-				var html = '';
-				if (r.success && r.data.results) {
-					r.data.results.forEach(function(item){
-						if (ids.indexOf(parseInt(item.id)) >= 0) return;
-						html += '<div><button type="button" class="button gmcq-add-q" data-id="'+item.id+'">Add</button> '+$('<span>').text(item.question_text.replace(/<[^>]+>/g,'').substring(0,80)).html()+'</div>';
-					});
-				}
-				$('#gmcq-search-results').html(html || '<p>No results</p>');
-			});
-		});
-		$('#gmcq-search-results').on('click', '.gmcq-add-q', function(){
-			var id = parseInt($(this).data('id'));
-			if (ids.indexOf(id) < 0) ids.push(id);
-			$(this).closest('div').remove();
-			$('#gmcq-assigned-list').append('<li data-id="'+id+'">Question #'+id+' <button type="button" class="button-link gmcq-remove-q" data-id="'+id+'">Remove</button></li>');
-		});
-		$('#gmcq-assigned-list').on('click', '.gmcq-remove-q', function(){
-			var id = parseInt($(this).data('id'));
-			ids = ids.filter(function(x){ return x !== id; });
-			$(this).closest('li').remove();
-		});
 	});
 	</script>
 	<?php

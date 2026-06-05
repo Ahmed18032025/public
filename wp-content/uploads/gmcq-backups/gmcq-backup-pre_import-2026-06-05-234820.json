@@ -1,0 +1,150 @@
+{
+    "type": "pre_import",
+    "entity": "",
+    "timestamp": "2026-06-05 23:48:20",
+    "questions": [
+        {
+            "id": "2",
+            "category_id": "18",
+            "question_text": "<p>Which number is only even prime number?<\/p>",
+            "question_hash": "446246034fd3ce807d8b89590fd40011",
+            "question_type": "mcq_single",
+            "explanation": "<p>2 is the only even prime number.<\/p>",
+            "difficulty": "easy",
+            "marks": "1.00",
+            "negative_marks": "0.25",
+            "is_active": "1",
+            "usage_count": "1",
+            "import_id": null,
+            "created_by": "1",
+            "created_at": "2026-06-05 00:31:04",
+            "updated_at": "2026-06-06 05:00:40",
+            "deleted_at": null,
+            "deleted_by": null
+        },
+        {
+            "id": "4",
+            "category_id": "21",
+            "question_text": "<p>Which City is known as IT Hub of India?<\/p>",
+            "question_hash": "9024c240cefce059eb1ac1a4f64c0d5a",
+            "question_type": "mcq_single",
+            "explanation": "<p>Bengaluru is considered as the IT Hub City of India.<\/p>",
+            "difficulty": "medium",
+            "marks": "1.00",
+            "negative_marks": "0.25",
+            "is_active": "1",
+            "usage_count": "1",
+            "import_id": null,
+            "created_by": "1",
+            "created_at": "2026-06-05 02:43:54",
+            "updated_at": "2026-06-06 05:00:40",
+            "deleted_at": null,
+            "deleted_by": null
+        },
+        {
+            "id": "6",
+            "category_id": "21",
+            "question_text": "<p>Which City is know as the Pink City?<\/p>",
+            "question_hash": "30e27e88c6da1cb5d5eb7963f3f5b508",
+            "question_type": "mcq_single",
+            "explanation": "<p>Jaipur is known as the Pink City of India.<\/p>",
+            "difficulty": "easy",
+            "marks": "1.00",
+            "negative_marks": "0.25",
+            "is_active": "1",
+            "usage_count": "1",
+            "import_id": null,
+            "created_by": "1",
+            "created_at": "2026-06-05 12:27:33",
+            "updated_at": "2026-06-06 05:00:40",
+            "deleted_at": null,
+            "deleted_by": null
+        }
+    ],
+    "answers": [
+        {
+            "id": "9",
+            "question_id": "2",
+            "answer_text": "7",
+            "is_correct": "0",
+            "sort_order": "0"
+        },
+        {
+            "id": "10",
+            "question_id": "2",
+            "answer_text": "2",
+            "is_correct": "1",
+            "sort_order": "1"
+        },
+        {
+            "id": "11",
+            "question_id": "2",
+            "answer_text": "3",
+            "is_correct": "0",
+            "sort_order": "2"
+        },
+        {
+            "id": "12",
+            "question_id": "2",
+            "answer_text": "4",
+            "is_correct": "0",
+            "sort_order": "3"
+        },
+        {
+            "id": "25",
+            "question_id": "4",
+            "answer_text": "Delhi",
+            "is_correct": "0",
+            "sort_order": "0"
+        },
+        {
+            "id": "26",
+            "question_id": "4",
+            "answer_text": "Mumbai",
+            "is_correct": "0",
+            "sort_order": "1"
+        },
+        {
+            "id": "27",
+            "question_id": "4",
+            "answer_text": "Bengaluru",
+            "is_correct": "1",
+            "sort_order": "2"
+        },
+        {
+            "id": "28",
+            "question_id": "4",
+            "answer_text": "Jaipur",
+            "is_correct": "0",
+            "sort_order": "3"
+        },
+        {
+            "id": "37",
+            "question_id": "6",
+            "answer_text": "Darbhanga",
+            "is_correct": "0",
+            "sort_order": "0"
+        },
+        {
+            "id": "38",
+            "question_id": "6",
+            "answer_text": "Delhi",
+            "is_correct": "0",
+            "sort_order": "1"
+        },
+        {
+            "id": "39",
+            "question_id": "6",
+            "answer_text": "Nainital",
+            "is_correct": "0",
+            "sort_order": "2"
+        },
+        {
+            "id": "40",
+            "question_id": "6",
+            "answer_text": "Jaipur",
+            "is_correct": "1",
+            "sort_order": "3"
+        }
+    ]
+}

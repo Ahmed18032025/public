@@ -34,11 +34,9 @@ function gmcq_create_assets_dir():void{
 	$d=wp_upload_dir()['basedir'].'/gmcq-assets';
 	if(!file_exists($d))wp_mkdir_p($d);
 	$cd=$d.'/css';
-	if(!file_exists($cd)){
-		wp_mkdir_p($cd);
-		$c='/* GMCQ Admin Styles */'.PHP_EOL.'.gmcq-dashboard-wrap{padding:20px 0}'.PHP_EOL.'.gmcq-card{background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px;margin:10px 0}'.PHP_EOL.'.gmcq-card h2{margin-top:0}'.PHP_EOL.'.gmcq-status-ok{color:#46b450;font-weight:600}'.PHP_EOL.'.gmcq-status-warning{color:#ffb900;font-weight:600}'.PHP_EOL.'.gmcq-status-inactive{color:#dc3232;font-weight:600}'.PHP_EOL.'.gmcq-filter-tabs{margin:15px 0}'.PHP_EOL.'.gmcq-filter-tabs a{display:inline-block;padding:6px 16px;text-decoration:none;border:1px solid #ccd0d4;border-radius:3px 3px 0 0;background:#f1f1f1;margin-right:4px}'.PHP_EOL.'.gmcq-filter-tabs a.current{background:#fff;border-bottom-color:#fff;font-weight:600}'.PHP_EOL.'.gmcq-search-box{margin:15px 0}'.PHP_EOL;
-		@file_put_contents($cd.'/admin.css',$c);
-	}
+	if(!file_exists($cd))wp_mkdir_p($cd);
+	$c='/* GMCQ Admin Styles */'.PHP_EOL.'.gmcq-dashboard-wrap{padding:20px 0}'.PHP_EOL.'.gmcq-card{background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px;margin:10px 0}'.PHP_EOL.'.gmcq-card h2{margin-top:0}'.PHP_EOL.'.gmcq-card .gmcq-card{background:#f9f9f9;border-color:#ddd}'.PHP_EOL.'.gmcq-status-ok{color:#46b450;font-weight:600}'.PHP_EOL.'.gmcq-status-warning{color:#ffb900;font-weight:600}'.PHP_EOL.'.gmcq-status-inactive{color:#dc3232;font-weight:600}'.PHP_EOL.'.gmcq-filter-tabs{margin:15px 0}'.PHP_EOL.'.gmcq-filter-tabs a{display:inline-block;padding:8px 18px;text-decoration:none;border:1px solid #ccd0d4;border-radius:3px 3px 0 0;background:#f1f1f1;margin-right:4px;font-size:14px}'.PHP_EOL.'.gmcq-filter-tabs a.current{background:#fff;border-bottom-color:#fff;font-weight:600}'.PHP_EOL.'.gmcq-search-box{margin:15px 0}'.PHP_EOL.'.gmcq-search-box select,.gmcq-search-box input[type="search"]{padding:8px 10px;border:1px solid #ccc;border-radius:3px;font-size:14px;min-height:36px}'.PHP_EOL.'.gmcq-search-box .button{padding:8px 16px;min-height:36px;font-size:14px}'.PHP_EOL.'#gmcq-assigned-list li{padding:12px 14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}'.PHP_EOL.'#gmcq-search-results div{padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}'.PHP_EOL.'#gmcq-search-results .button-small{padding:4px 12px;font-size:13px;min-height:30px}'.PHP_EOL;
+	@file_put_contents($cd.'/admin.css',$c);
 }
 add_action('admin_init','gmcq_create_assets_dir');
 

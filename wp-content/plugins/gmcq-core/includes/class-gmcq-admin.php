@@ -22,6 +22,11 @@ function gmcq_admin_enqueue_scripts(string $hook):void{
 	$u=wp_upload_dir();$c=$u['baseurl'].'/gmcq-assets/css/admin.css';
 	wp_enqueue_style('gmcq-admin',$c,array(),GMCQ_VERSION);
 	wp_localize_script('jquery','gmcqAdmin',array('ajaxUrl'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('gmcq_category_nonce'),'version'=>GMCQ_VERSION));
+
+	// Thickbox for import page (format help modal + import details)
+	if (false !== strpos($hook, 'gmcq-import')) {
+		add_thickbox();
+	}
 }
 add_action('admin_enqueue_scripts','gmcq_admin_enqueue_scripts');
 

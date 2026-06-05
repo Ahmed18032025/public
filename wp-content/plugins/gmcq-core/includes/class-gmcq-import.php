@@ -1,1 +1,779 @@
-[{"gmcq_import_lock';\n\tif ( get_transient( $lock_key ) ) {\n\t\treturn new WP_Error( 'import_locked', __( 'Another import is currently running. Please wait and try again.', 'gmcq":""},{"gmcq_import_lock":""},{"/gmcq-backups":"if ( ! file_exists( $backup_dir ) ) {\n\t\twp_mkdir_p( $backup_dir );"},["type'      => 'pre_import","import_id","import_id,\n\t\t'timestamp' => current_time( 'mysql' ),\n\t\t'questions' => $wpdb->get_results( \"SELECT * FROM {$p}gmcq_questions","answers","wpdb->get_results( \"SELECT * FROM {$p}gmcq_answers","filename = 'gmcq-backup-pre-import-' . $import_id . '-' . date( 'Y-m-d-His' ) . '.json';\n\t$filepath = $backup_dir . '/' . $filename;\n\tfile_put_contents( $filepath, wp_json_encode( $data, JSON_PRETTY_PRINT ) );\n\n\t$backups = get_option( 'gmcq_backup_index', [] );\n\t$backups[] = [\n\t\t'id'        => uniqid(),\n\t\t'type'      => 'pre_import',\n\t\t'file'      => $filename,\n\t\t'created'   => current_time( 'mysql' ),\n\t\t'import_id' => $import_id,\n\t];\n\tupdate_option( 'gmcq_backup_index', $backups );\n\n\treturn $filename;\n}\n\n// ========================================================================\n// CSV PARSING (spec format)\n// ========================================================================\n\n/**\n * Parse a single CSV row into the question data structure expected by gmcq_create_question().\n *\n * Expected columns (spec format):\n *   Required: question_text, option_a, option_b, correct_answer\n *   Optional: option_c, option_d, explanation, difficulty, marks, negative_marks,\n *             question_type, category_slug\n *\n * @param array $row       Associative array of column -> value (keys already lowercased).\n * @param int   $cat_id    Default category ID from the import form.\n * @param int   $import_id Import batch ID.\n * @return array|WP_Error Parsed question data or WP_Error on validation failure.\n */\nfunction gmcq_parse_csv_row( array $row, int $cat_id, int $import_id = 0 ): array|WP_Error {\n\t$row = array_map( 'trim', $row );\n\n\tif ( empty( $row['question_text'] ) ) {\n\t\treturn new WP_Error( 'empty_question', __( 'Question text is empty.', 'gmcq' ) );\n\t}\n\n\tif ( empty( $row['option_a'] ) || empty( $row['option_b'] ) ) {\n\t\treturn new WP_Error( 'min_options', __( 'At least option_a and option_b are required.', 'gmcq' ) );\n\t}\n\n\tif ( empty( $row['correct_answer'] ) ) {\n\t\treturn new WP_Error( 'empty_correct', __( 'Correct answer column is required.', 'gmcq' ) );\n\t}\n\n\t$answers = [];\n\t$option_letters = [ 'a', 'b', 'c', 'd' ];\n\tforeach ( $option_letters as $letter ) {\n\t\t$key = 'option_' . $letter;\n\t\tif ( ! empty( $row[ $key ] ) ) {\n\t\t\t$answers[] = [\n\t\t\t\t'answer_text' => sanitize_text_field( $row[ $key ] ),\n\t\t\t\t'is_correct'  => 0,\n\t\t\t\t'letter'      => strtoupper( $letter ),\n\t\t\t];\n\t\t}\n\t}\n\n\tif ( count( $answers ) < 2 ) {\n\t\treturn new WP_Error( 'min_answers', __( 'At least 2 options required.', 'gmcq' ) );\n\t}\n\n\t$correct_letters = array_map( 'trim', explode( ',', strtoupper( $row['correct_answer'] ) ) );\n\t$correct_letters = array_filter( $correct_letters );\n\tif ( empty( $correct_letters ) ) {\n\t\treturn new WP_Error( 'no_correct', __( 'At least one correct answer must be specified.', 'gmcq' ) );\n\t}\n\n\t$valid_letters = array_column( $answers, 'letter' );\n\tforeach ( $correct_letters as $cl ) {\n\t\tif ( ! in_array( $cl, $valid_letters, true ) ) {\n\t\t\treturn new WP_Error( 'invalid_correct', sprintf( __( 'Correct answer \"%s","does not match any provided options.', 'gmcq' ), esc_html( $cl ) ) );\n\t\t}\n\t}\n\n\tforeach ( $answers as &$ans ) {\n\t\tif ( in_array( $ans['letter'], $correct_letters, true ) ) {\n\t\t\t$ans['is_correct'] = 1;\n\t\t}\n\t\tunset( $ans['letter'] );\n\t}\n\tunset( $ans );\n\n\t$correct_count = count( $correct_letters );\n\t$question_type = ! empty( $row['question_type'] ) ? sanitize_key( $row['question_type'] ) : '';\n\tif ( empty( $question_type ) ) {\n\t\t$question_type = ( $correct_count > 1 ) ? 'mcq_multiple' : 'mcq_single';\n\t}\n\tif ( ! in_array( $question_type, [ 'mcq_single', 'mcq_multiple', 'true_false' ], true ) ) {\n\t\t$question_type = ( $correct_count > 1 ) ? 'mcq_multiple' : 'mcq_single';\n\t}\n\n\tif ( 'true_false' === $question_type ) {\n\t\tif ( count( $answers ) !== 2 ) {\n\t\t\treturn new WP_Error( 'tf_options', __( 'True/False questions must have exactly 2 options.', 'gmcq' ) );\n\t\t}\n\t}\n\n\tif ( 'mcq_single' === $question_type && $correct_count !== 1 ) {\n\t\treturn new WP_Error( 'single_one_correct', __( 'Single-answer questions must have exactly 1 correct answer.', 'gmcq' ) );\n\t}\n\n\t$resolved_cat_id = $cat_id;\n\tif ( ! empty( $row['category_slug'] ) ) {\n\t\t$slugs = array_map( 'trim', explode( '/', $row['category_slug'] ) );\n\t\t$slugs = array_filter( $slugs );\n\n\t\tglobal $wpdb;\n\t\t$p = $wpdb->prefix;\n\n\t\tif ( count( $slugs ) === 2 ) {\n\t\t\t[$parent_slug, $child_slug] = $slugs;\n\t\t\t$parent = $wpdb->get_row( $wpdb->prepare(\n\t\t\t\t\"SELECT id FROM {$p}gmcq_categories WHERE slug = %s AND parent_id IS NULL AND is_active = 1 LIMIT 1","parent_slug\n\t\t\t) );\n\t\t\tif ( $parent ) {\n\t\t\t\t$child = $wpdb->get_row( $wpdb->prepare(\n\t\t\t\t\t\"SELECT id FROM {$p}gmcq_categories WHERE slug = %s AND parent_id = %d AND is_active = 1 LIMIT 1","child_slug,\n\t\t\t\t\t(int) $parent->id\n\t\t\t\t) );\n\t\t\t\tif ( $child ) {\n\t\t\t\t\t$resolved_cat_id = (int) $child->id;\n\t\t\t\t}\n\t\t\t}\n\t\t} elseif ( count( $slugs ) === 1 ) {\n\t\t\t$leaf = $wpdb->get_row( $wpdb->prepare(\n\t\t\t\t\"SELECT id FROM {$p}gmcq_categories WHERE slug = %s AND is_active = 1 LIMIT 1","slugs[0]\n\t\t\t) );\n\t\t\tif ( $leaf ) {\n\t\t\t\t$resolved_cat_id = (int) $leaf->id;\n\t\t\t}\n\t\t}\n\t}\n\n\tif ( $resolved_cat_id > 0 ) {\n\t\t$cat_check = gmcq_validate_question_category( $resolved_cat_id );\n\t\tif ( is_wp_error( $cat_check ) ) {\n\t\t\treturn $cat_check;\n\t\t}\n\t}\n\n\treturn [\n\t\t'category_id'    => $resolved_cat_id > 0 ? $resolved_cat_id : null,\n\t\t'question_text'  => wp_kses_post( $row['question_text'] ),\n\t\t'question_type'  => $question_type,\n\t\t'explanation'    => ! empty( $row['explanation'] ) ? wp_kses_post( $row['explanation'] ) : '',\n\t\t'difficulty'     => in_array( $row['difficulty'] ?? '', [ 'easy', 'medium', 'hard' ], true ) ? sanitize_key( $row['difficulty'] ) : 'medium',\n\t\t'marks'          => isset( $row['marks'] ) ? (float) $row['marks'] : 1.00,\n\t\t'negative_marks' => isset( $row['negative_marks'] ) ? (float) $row['negative_marks'] : 0.25,\n\t\t'import_id'      => $import_id,\n\t\t'answers'        => $answers,\n\t];\n}\n\n// ========================================================================\n// MAIN IMPORT RUNNER (three modes: preview, commit, run)\n// ========================================================================\n\n/**\n * Run CSV import.\n *\n * @param string      $filepath       Path to uploaded CSV file.\n * @param int         $target_cat_id  Target category ID from form.\n * @param int         $target_quiz_id Optional target quiz ID.\n * @param string      $step           'preview' | 'commit' | 'run' (default: 'run').\n * @param string|null $preview_token  Token returned from preview step (for commit step).\n * @param string      $filename       Original filename.\n * @return array|WP_Error Result array with import_id, counts, status, preview data, etc.\n */\nfunction gmcq_run_csv_import(\n\tstring $filepath,\n\tint $target_cat_id,\n\tint $target_quiz_id = 0,\n\tstring $step = 'run',\n\t?string $preview_token = null,\n\tstring $filename = ''\n): array|WP_Error {\n\n\tif ( ! file_exists( $filepath ) ) {\n\t\treturn new WP_Error( 'file_missing', __( 'Import file not found.', 'gmcq' ) );\n\t}\n\n\tglobal $wpdb;\n\t$user_id = get_current_user_id();\n\t$p = $wpdb->prefix;\n\n\t$lock_result = gmcq_acquire_import_lock();\n\tif ( is_wp_error( $lock_result ) ) {\n\t\treturn $lock_result;\n\t}\n\n\t$lock_released = false;\n\t$release_lock = function() use ( &$lock_released ) {\n\t\tif ( ! $lock_released ) {\n\t\t\tgmcq_release_import_lock();\n\t\t\t$lock_released = true;\n\t\t}\n\t};\n\tregister_shutdown_function( $release_lock );\n\n\ttry {\n\t\t$handle = fopen( $filepath, 'r' );\n\t\tif ( ! $handle ) {\n\t\t\treturn new WP_Error( 'file_read', __( 'Could not read CSV file.', 'gmcq' ) );\n\t\t}\n\n\t\t$header = fgetcsv( $handle );\n\t\tif ( ! $header ) {\n\t\t\tfclose( $handle );\n\t\t\treturn new WP_Error( 'empty_csv', __( 'CSV file is empty.', 'gmcq' ) );\n\t\t}\n\n\t\t$header = array_map( 'strtolower', array_map( 'trim', $header ) );\n\t\t$col_map = array_flip( $header );\n\n\t\t$required = [ 'question_text', 'option_a', 'option_b', 'correct_answer' ];\n\t\tforeach ( $required as $req ) {\n\t\t\tif ( ! isset( $col_map[ $req ] ) ) {\n\t\t\t\tfclose( $handle );\n\t\t\t\treturn new WP_Error( 'missing_column', sprintf( __( 'Required column \"%s","is missing from CSV.', 'gmcq' ), esc_html( $req ) ) );\n\t\t\t}\n\t\t}\n\n\t\t// --- STEP: preview ---\n\t\tif ( 'preview' === $step ) {\n\t\t\t$wpdb->insert(\n\t\t\t\t$p . 'gmcq_imports',\n\t\t\t\t[\n\t\t\t\t\t'filename'           => $filename ?: basename( $filepath ),\n\t\t\t\t\t'status'             => 'processing',\n\t\t\t\t\t'target_category_id' => $target_cat_id,\n\t\t\t\t\t'target_quiz_id'     => $target_quiz_id ?: null,\n\t\t\t\t\t'user_id'            => $user_id,\n\t\t\t\t],\n\t\t\t\t[ '%s', '%s', '%d', '%d', '%d' ]\n\t\t\t);\n\t\t\t$import_id = (int) $wpdb->insert_id;\n\n\t\t\tif ( gmcq_get_setting( 'backup_enabled', 1 ) ) {\n\t\t\t\tgmcq_backup_before_import( $import_id );\n\t\t\t}\n\n\t\t\t$total = 0;\n\t\t\t$valid_rows = [];\n\t\t\t$dupes = 0;\n\t\t\t$errors = 0;\n\t\t\t$error_log = [];\n\t\t\t$preview_rows = [];\n\n\t\t\twhile ( ( $line = fgetcsv( $handle ) ) !== false ) {\n\t\t\t\t$total++;\n\t\t\t\t$row = [];\n\t\t\t\tforeach ( $col_map as $col => $idx ) {\n\t\t\t\t\t$row[ $col ] = $line[ $idx ] ?? '';\n\t\t\t\t}\n\n\t\t\t\t$parsed = gmcq_parse_csv_row( $row, $target_cat_id, $import_id );\n\t\t\t\tif ( is_wp_error( $parsed ) ) {\n\t\t\t\t\t$errors++;\n\t\t\t\t\tif ( count( $error_log ) < 100 ) {\n\t\t\t\t\t\t$error_log[] = [ 'row' => $total, 'message' => $parsed->get_error_message() ];\n\t\t\t\t\t}\n\t\t\t\t\tcontinue;\n\t\t\t\t}\n\n\t\t\t\t$hash = gmcq_generate_question_hash( $parsed['question_text'] );\n\t\t\t\t$exists = $wpdb->get_var( $wpdb->prepare(\n\t\t\t\t\t\"SELECT id FROM {$p}gmcq_questions WHERE question_hash = %s","hash\n\t\t\t\t) );\n\t\t\t\tif ( $exists ) {\n\t\t\t\t\t$dupes++;\n\t\t\t\t\t$parsed['_preview_status'] = 'duplicate';\n\t\t\t\t\t$parsed['_preview_message'] = __( 'Duplicate question (hash match)', 'gmcq' );\n\t\t\t\t} else {\n\t\t\t\t\t$parsed['_preview_status'] = 'valid';\n\t\t\t\t}\n\n\t\t\t\t$valid_rows[] = $parsed;\n\n\t\t\t\tif ( count( $preview_rows ) < 5 ) {\n\t\t\t\t\t$preview_rows[] = [\n\t\t\t\t\t\t'row'      => $total,\n\t\t\t\t\t\t'question' => wp_trim_words( wp_strip_all_tags( $parsed['question_text'] ), 15, '&hellip;' ),\n\t\t\t\t\t\t'type'     => $parsed['question_type'],\n\t\t\t\t\t\t'category' => $parsed['category_id'] ? gmcq_get_category( $parsed['category_id'] )->name ?? 'N/A' : 'None',\n\t\t\t\t\t\t'status'   => $parsed['_preview_status'],\n\t\t\t\t\t\t'message'  => $parsed['_preview_message'] ?? '',\n\t\t\t\t\t];\n\t\t\t\t}\n\t\t\t}\n\t\t\tfclose( $handle );\n\n\t\t\t$token = wp_generate_password( 20, false );\n\t\t\t$preview_key = 'gmcq_import_preview_' . $token;\n\t\t\tset_transient( $preview_key, [\n\t\t\t\t'import_id'   => $import_id,\n\t\t\t\t'valid_rows'  => $valid_rows,\n\t\t\t\t'target_quiz' => $target_quiz_id,\n\t\t\t\t'filename'    => $filename ?: basename( $filepath ),\n\t\t\t], 5 * MINUTE_IN_SECONDS );\n\n\t\t\t$wpdb->update(\n\t\t\t\t$p . 'gmcq_imports',\n\t\t\t\t[\n\t\t\t\t\t'total_rows'     => $total,\n\t\t\t\t\t'skipped_dupes'  => $dupes,\n\t\t\t\t\t'skipped_errors' => $errors,\n\t\t\t\t\t'error_log'      => wp_json_encode( $error_log ),\n\t\t\t\t],\n\t\t\t\t[ 'id' => $import_id ],\n\t\t\t\t[ '%d', '%d', '%d', '%s' ],\n\t\t\t\t[ '%d' ]\n\t\t\t);\n\n\t\t\tgmcq_release_import_lock();\n\t\t\t$lock_released = true;\n\n\t\t\treturn [\n\t\t\t\t'import_id'    => $import_id,\n\t\t\t\t'total'        => $total,\n\t\t\t\t'valid'        => count( $valid_rows ),\n\t\t\t\t'dupes'        => $dupes,\n\t\t\t\t'errors'       => $errors,\n\t\t\t\t'preview'      => $preview_rows,\n\t\t\t\t'preview_token'=> $token,\n\t\t\t\t'step'         => 'preview',\n\t\t\t];\n\t\t}\n\n\t\t// --- STEP: commit OR run (which includes preview internally) ---\n\t\tif ( 'commit' === $step ) {\n\t\t\tif ( empty( $preview_token ) ) {\n\t\t\t\treturn new WP_Error( 'no_preview', __( 'No preview token provided for commit.', 'gmcq' ) );\n\t\t\t}\n\t\t\t$preview_key = 'gmcq_import_preview_' . $preview_token;\n\t\t\t$preview_data = get_transient( $preview_key );\n\t\t\tif ( ! $preview_data ) {\n\t\t\t\treturn new WP_Error( 'expired_preview', __( 'Preview expired. Please re-upload and preview again.', 'gmcq' ) );\n\t\t\t}\n\t\t\t$import_id   = $preview_data['import_id'];\n\t\t\t$valid_rows  = $preview_data['valid_rows'];\n\t\t\t$target_quiz = $preview_data['target_quiz'];\n\t\t\t$filename    = $preview_data['filename'];\n\t\t} else {\n\t\t\t$wpdb->insert(\n\t\t\t\t$p . 'gmcq_imports',\n\t\t\t\t[\n\t\t\t\t\t'filename'           => $filename ?: basename( $filepath ),\n\t\t\t\t\t'status'             => 'processing',\n\t\t\t\t\t'target_category_id' => $target_cat_id,\n\t\t\t\t\t'target_quiz_id'     => $target_quiz_id ?: null,\n\t\t\t\t\t'user_id'            => $user_id,\n\t\t\t\t],\n\t\t\t\t[ '%s', '%s', '%d', '%d', '%d' ]\n\t\t\t);\n\t\t\t$import_id = (int) $wpdb->insert_id;\n\n\t\t\tif ( gmcq_get_setting( 'backup_enabled', 1 ) ) {\n\t\t\t\tgmcq_backup_before_import( $import_id );\n\t\t\t}\n\n\t\t\tfseek( $handle, 0 );\n\t\t\tfgetcsv( $handle );\n\n\t\t\t$valid_rows = [];\n\t\t\t$total = 0;\n\t\t\t$dupes = 0;\n\t\t\t$errors = 0;\n\t\t\t$error_log = [];\n\n\t\t\twhile ( ( $line = fgetcsv( $handle ) ) !== false ) {\n\t\t\t\t$total++;\n\t\t\t\t$row = [];\n\t\t\t\tforeach ( $col_map as $col => $idx ) {\n\t\t\t\t\t$row[ $col ] = $line[ $idx ] ?? '';\n\t\t\t\t}\n\n\t\t\t\t$parsed = gmcq_parse_csv_row( $row, $target_cat_id, $import_id );\n\t\t\t\tif ( is_wp_error( $parsed ) ) {\n\t\t\t\t\t$errors++;\n\t\t\t\t\tif ( count( $error_log ) < 100 ) {\n\t\t\t\t\t\t$error_log[] = [ 'row' => $total, 'message' => $parsed->get_error_message() ];\n\t\t\t\t\t}\n\t\t\t\t\tcontinue;\n\t\t\t\t}\n\n\t\t\t\t$hash = gmcq_generate_question_hash( $parsed['question_text'] );\n\t\t\t\t$exists = $wpdb->get_var( $wpdb->prepare(\n\t\t\t\t\t\"SELECT id FROM {$p}gmcq_questions WHERE question_hash = %s","hash\n\t\t\t\t) );\n\t\t\t\tif ( $exists ) {\n\t\t\t\t\t$dupes++;\n\t\t\t\t\tcontinue;\n\t\t\t\t}\n\n\t\t\t\t$valid_rows[] = $parsed;\n\t\t\t}\n\t\t\tfclose( $handle );\n\n\t\t\t$target_quiz = $target_quiz_id;\n\t\t}\n\n\t\t// --- BATCH INSERT (50 rows per transaction) ---\n\t\t$imported = 0;\n\t\t$new_question_ids = [];\n\t\t$batch_size = 50;\n\t\t$batch = [];\n\n\t\tforeach ( $valid_rows as $parsed ) {\n\t\t\t$batch[] = $parsed;\n\n\t\t\tif ( count( $batch ) >= $batch_size ) {\n\t\t\t\t$wpdb->query( 'START TRANSACTION' );\n\t\t\t\ttry {\n\t\t\t\t\tforeach ( $batch as $qdata ) {\n\t\t\t\t\t\t$qid = gmcq_create_question( $qdata );\n\t\t\t\t\t\tif ( ! is_wp_error( $qid ) ) {\n\t\t\t\t\t\t\t$imported++;\n\t\t\t\t\t\t\t$new_question_ids[] = $qid;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\t$wpdb->query( 'COMMIT' );\n\t\t\t\t} catch ( Exception $e ) {\n\t\t\t\t\t$wpdb->query( 'ROLLBACK' );\n\t\t\t\t}\n\t\t\t\t$batch = [];\n\t\t\t}\n\t\t}\n\n\t\tif ( ! empty( $batch ) ) {\n\t\t\t$wpdb->query( 'START TRANSACTION' );\n\t\t\ttry {\n\t\t\t\tforeach ( $batch as $qdata ) {\n\t\t\t\t\t$qid = gmcq_create_question( $qdata );\n\t\t\t\t\tif ( ! is_wp_error( $qid ) ) {\n\t\t\t\t\t\t$imported++;\n\t\t\t\t\t\t$new_question_ids[] = $qid;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\t$wpdb->query( 'COMMIT' );\n\t\t\t} catch ( Exception $e ) {\n\t\t\t\t$wpdb->query( 'ROLLBACK' );\n\t\t\t}\n\t\t}\n\n\t\tif ( $target_quiz && ! empty( $new_question_ids ) ) {\n\t\t\t$existing = wp_list_pluck( gmcq_get_quiz_questions( $target_quiz ), 'question_id' );\n\t\t\t$merged = array_merge( $existing, $new_question_ids );\n\t\t\tgmcq_set_quiz_questions( $target_quiz, $merged );\n\t\t}\n\n\t\t$status = ( $errors > 0 && 0 === $imported ) ? 'failed' : 'completed';\n\n\t\t$wpdb->update(\n\t\t\t$p . 'gmcq_imports',\n\t\t\t[\n\t\t\t\t'total_rows'      => $total,\n\t\t\t\t'imported'        => $imported,\n\t\t\t\t'skipped_dupes'   => $dupes,\n\t\t\t\t'skipped_errors'  => $errors,\n\t\t\t\t'status'          => $status,\n\t\t\t\t'error_log'       => wp_json_encode( $error_log ),\n\t\t\t\t'completed_at'    => current_time( 'mysql' ),\n\t\t\t],\n\t\t\t[ 'id' => $import_id ],\n\t\t\t[ '%d', '%d', '%d', '%d', '%s', '%s', '%s' ],\n\t\t\t[ '%d' ]\n\t\t);\n\n\t\tif ( isset( $preview_token ) ) {\n\t\t\tdelete_transient( 'gmcq_import_preview_' . $preview_token );\n\t\t}\n\n\t\tdo_action( 'gmcq_import_completed', $import_id );\n\t\tgmcq_clear_dashboard_cache( 'import' );\n\n\t\tgmcq_release_import_lock();\n\t\t$lock_released = true;\n\n\t\treturn [\n\t\t\t'import_id'  => $import_id,\n\t\t\t'total'      => $total,\n\t\t\t'imported'   => $imported,\n\t\t\t'dupes'      => $dupes,\n\t\t\t'errors'     => $errors,\n\t\t\t'error_log'  => $error_log,\n\t\t\t'status'     => $status,\n\t\t\t'step'       => 'completed',\n\t\t];\n\n\t} catch ( Exception $e ) {\n\t\tgmcq_release_import_lock();\n\t\treturn new WP_Error( 'import_exception', 'Import failed: ' . $e->getMessage() );\n\t}\n}\n\n// ========================================================================\n// AJAX HANDLERS\n// ========================================================================\n\n/**\n * AJAX: Run import preview (step 1).\n */\nfunction gmcq_ajax_preview_import(): void {\n\tcheck_ajax_referer( 'gmcq_import_nonce' );\n\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'Permission denied.', 'gmcq' ) ] );\n\t}\n\n\tif ( empty( $_FILES['csv_file'] ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'No file uploaded.', 'gmcq' ) ] );\n\t}\n\n\trequire_once ABSPATH . 'wp-admin/includes/file.php';\n\t$upload = wp_handle_upload(\n\t\t$_FILES['csv_file'],\n\t\t[ 'test_form' => false, 'mimes' => [ 'csv' => 'text/csv' ] ]\n\t);\n\n\tif ( ! empty( $upload['error'] ) ) {\n\t\twp_send_json_error( [ 'message' => $upload['error'] ] );\n\t}\n\n\t$category_id    = isset( $_POST['category_id'] ) ? (int) $_POST['category_id'] : 0;\n\t$target_quiz_id = isset( $_POST['target_quiz_id'] ) ? (int) $_POST['target_quiz_id'] : 0;\n\n\tif ( $category_id <= 0 ) {\n\t\twp_send_json_error( [ 'message' => __( 'Target category is required.', 'gmcq' ) ] );\n\t}\n\n\t$result = gmcq_run_csv_import( $upload['file'], $category_id, $target_quiz_id, 'preview', null, basename( $_FILES['csv_file']['name'] ) );\n\n\tif ( is_wp_error( $result ) ) {\n\t\twp_send_json_error( [ 'message' => $result->get_error_message() ] );\n\t}\n\n\twp_send_json_success( $result );\n}\n\n/**\n * AJAX: Commit import after preview (step 2).\n */\nfunction gmcq_ajax_commit_import(): void {\n\tcheck_ajax_referer( 'gmcq_import_nonce' );\n\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'Permission denied.', 'gmcq' ) ] );\n\t}\n\n\t$preview_token = isset( $_POST['preview_token'] ) ? sanitize_text_field( $_POST['preview_token'] ) : '';\n\n\tif ( empty( $preview_token ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'Preview token missing.', 'gmcq' ) ] );\n\t}\n\n\t$result = gmcq_run_csv_import( '', 0, 0, 'commit', $preview_token );\n\n\tif ( is_wp_error( $result ) ) {\n\t\twp_send_json_error( [ 'message' => $result->get_error_message() ] );\n\t}\n\n\twp_send_json_success( $result );\n}\n\n/**\n * AJAX: One-shot import (legacy/simple endpoint for backward compat and cron).\n */\nfunction gmcq_ajax_run_import(): void {\n\tcheck_ajax_referer( 'gmcq_import_nonce' );\n\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'Permission denied.', 'gmcq' ) ] );\n\t}\n\n\tif ( empty( $_FILES['csv_file'] ) ) {\n\t\twp_send_json_error( [ 'message' => __( 'No file uploaded.', 'gmcq' ) ] );\n\t}\n\n\trequire_once ABSPATH . 'wp-admin/includes/file.php';\n\t$upload = wp_handle_upload(\n\t\t$_FILES['csv_file'],\n\t\t[ 'test_form' => false, 'mimes' => [ 'csv' => 'text/csv' ] ]\n\t);\n\n\tif ( ! empty( $upload['error'] ) ) {\n\t\twp_send_json_error( [ 'message' => $upload['error'] ] );\n\t}\n\n\t$category_id    = isset( $_POST['category_id'] ) ? (int) $_POST['category_id'] : 0;\n\t$target_quiz_id = isset( $_POST['target_quiz_id'] ) ? (int) $_POST['target_quiz_id'] : 0;\n\n\tif ( $category_id <= 0 ) {\n\t\twp_send_json_error( [ 'message' => __( 'Target category is required.', 'gmcq' ) ] );\n\t}\n\n\t$result = gmcq_run_csv_import( $upload['file'], $category_id, $target_quiz_id, 'run', null, basename( $_FILES['csv_file']['name'] ) );\n\n\tif ( is_wp_error( $result ) ) {\n\t\twp_send_json_error( [ 'message' => $result->get_error_message() ] );\n\t}\n\n\twp_send_json_success( $result );\n}\n\n/**\n * AJAX: Download sample CSV.\n */\nfunction gmcq_ajax_download_sample_csv(): void {\n\tcheck_ajax_referer( 'gmcq_import_nonce' );\n\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_die( __( 'Permission denied.', 'gmcq' ) );\n\t}\n\n\t$sample  =","question_text,option_a,option_b,option_c,option_d,correct_answer,explanation,difficulty,marks,negative_marks,question_type,category_slug\n\";\n\t$sample .= \"\"What is the capital of France?,Paris,London,Berlin,Madrid,A,\"Explanation: Paris is the capital.\",easy,1.00,0.25,mcq_single,geography/world-capitals\n\";\n\t$sample .= \"\"Which of these are planets?,Earth,Mars,Jupiter,Stars,B,C,\"Select all that apply.\",medium,2.00,0.50,mcq_multiple,science/planets\n\";\n\t$sample .= \"\"The sun is a star.,True,False,,,A,\"Basic astronomy.\",easy,1.00,0.25,true_false,","header( 'Content-Type: text/csv; charset=utf-8' );\n\theader( 'Content-Disposition: attachment; filename=gmcq-sample-import-' . date( 'Y-m-d' ) . '.csv' );\n\techo chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF );\n\techo $sample;\n\texit;\n}\n\nfunction gmcq_register_import_ajax_handlers(): void {\n\tadd_action( 'wp_ajax_gmcq_preview_import', 'gmcq_ajax_preview_import' );\n\tadd_action( 'wp_ajax_gmcq_commit_import', 'gmcq_ajax_commit_import' );\n\tadd_action( 'wp_ajax_gmcq_run_import', 'gmcq_ajax_run_import' );\n\tadd_action( 'wp_ajax_gmcq_download_sample_csv', 'gmcq_ajax_download_sample_csv' );\n}\ngmcq_register_import_ajax_handlers();\n\n// ========================================================================\n// HELPERS: FETCH SINGLE IMPORT + RENDER DETAILS\n// ========================================================================\n\n/**\n * Get a single import record with decoded error_log.\n *\n * @param int $import_id Import ID.\n * @return object|null\n */\nfunction gmcq_get_import( int $import_id ) {\n\tglobal $wpdb;\n\t$row = $wpdb->get_row( $wpdb->prepare(\n\t\t\"SELECT * FROM {$wpdb->prefix}gmcq_imports WHERE id = %d","import_id\n\t) );\n\tif ( $row && ! empty( $row->error_log ) ) {\n\t\t$row->error_log = json_decode( $row->error_log, true ) ?: [];\n\t}\n\treturn $row;\n}\n\n/**\n * Render import details view (for thickbox/modal).\n */\nfunction gmcq_render_import_details(): void {\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_die( __( 'Permission denied.', 'gmcq' ) );\n\t}\n\n\t$import_id = isset( $_GET['id'] ) ? (int) $_GET['id'] : 0;\n\t$import = gmcq_get_import( $import_id );\n\n\tif ( ! $import ) {\n\t\techo '<div class=\"notice notice-error","p>' . esc_html__( 'Import not found.', 'gmcq' ) . '</p></div>';\n\t\treturn;\n\t}\n\n\t$status_class = [\n\t\t'pending'     => 'gmcq-status-warning',\n\t\t'processing'  => 'gmcq-status-warning',\n\t\t'completed'   => 'gmcq-status-ok',\n\t\t'failed'      => 'gmcq-status-inactive',\n\t];\n\t$cls = $status_class[ $import->status ] ?? '';\n\t?>\n\t<div class=\"gmcq-import-details\" style=\"padding:20px;max-width:800px","h2><?php printf( __( 'Import Details: %s', 'gmcq' ), esc_html( $import->filename ) ); ?></h2>\n\t\t<table class=\"form-table","tr><th><?php esc_html_e( 'Status', 'gmcq' ); ?></th><td><span class=\"<?php echo esc_attr( $cls ); ?>","php echo esc_html( ucfirst( $import->status ) ); ?></span></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Total Rows', 'gmcq' ); ?></th><td><?php echo (int) $import->total_rows; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Imported', 'gmcq' ); ?></th><td><?php echo (int) $import->imported; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Skipped (Duplicates)', 'gmcq' ); ?></th><td><?php echo (int) $import->skipped_dupes; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Skipped (Errors)', 'gmcq' ); ?></th><td><?php echo (int) $import->skipped_errors; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Target Category', 'gmcq' ); ?></th><td><?php echo $import->target_category_id ? esc_html( gmcq_get_category( $import->target_category_id )->name ?? '#' . $import->target_category_id ) : '&mdash;'; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Target Quiz', 'gmcq' ); ?></th><td><?php echo $import->target_quiz_id ? esc_html( get_the_title( $import->target_quiz_id ) ) : '&mdash;'; ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Started', 'gmcq' ); ?></th><td><?php echo esc_html( $import->started_at ); ?></td></tr>\n\t\t\t<tr><th><?php esc_html_e( 'Completed', 'gmcq' ); ?></th><td><?php echo $import->completed_at ? esc_html( $import->completed_at ) : '&mdash;'; ?></td></tr>\n\t\t</table>\n\n\t\t<?php if ( ! empty( $import->error_log ) ) : ?>\n\t\t\t<h3><?php esc_html_e( 'Error Log', 'gmcq' ); ?> (<?php echo count( $import->error_log ); ?>)</h3>\n\t\t\t<table class=\"widefat striped","thead><tr><th><?php esc_html_e( 'Row', 'gmcq' ); ?></th><th><?php esc_html_e( 'Message', 'gmcq' ); ?></th></tr></thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t<?php foreach ( $import->error_log as $err ) : ?>\n\t\t\t\t\t\t<tr><td><?php echo (int) $err['row']; ?></td><td><?php echo esc_html( $err['message'] ); ?></td></tr>\n\t\t\t\t\t<?php endforeach; ?>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t<?php else : ?>\n\t\t\t<p><?php esc_html_e( 'No errors logged.', 'gmcq' ); ?></p>\n\t\t<?php endif; ?>\n\t</div>\n\t<?php\n}\n\nadd_action( 'admin_init', function() {\n\tif ( isset( $_GET['page'] ) && 'gmcq-import' === $_GET['page'] && isset( $_GET['action'] ) && 'view' === $_GET['action'] ) {\n\t\tgmcq_render_import_details();\n\t\tdie();\n\t}\n} );\n\n// ========================================================================\n// ADMIN PAGE: CSV IMPORT\n// ========================================================================\n\nfunction gmcq_render_import_page(): void {\n\tif ( ! current_user_can( 'manage_gmcq' ) ) {\n\t\twp_die( esc_html__( 'You do not have permission to access this page.', 'gmcq' ) );\n\t}\n\n\t$filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : '';\n\t$imports = gmcq_get_imports( [ 'filter' => $filter ] );\n\t$cats = gmcq_get_categories( [ 'filter' => 'active', 'per_page' => -1 ] );\n\t$quizzes = gmcq_get_quizzes( [ 'filter' => 'all', 'per_page' => 100 ] );\n\t$nonce = wp_create_nonce( 'gmcq_import_nonce' );\n\t$sample_nonce = wp_create_nonce( 'gmcq_import_nonce' );\n\t?>\n\t<div class=\"wrap gmcq-dashboard-wrap","h1><?php esc_html_e( 'CSV Import', 'gmcq' ); ?></h1>\n\n\t\t<!-- UPLOAD & PREVIEW CARD -->\n\t\t<div class=\"gmcq-card\" style=\"max-width:1000px","h2><?php esc_html_e( 'Upload & Preview', 'gmcq' ); ?></h2>\n\t\t\t<p class=\"description","php esc_html_e( 'Required columns: question_text, option_a, option_b, correct_answer. Optional: option_c, option_d, explanation, difficulty, marks, negative_marks, question_type, category_slug (parent/child format).', 'gmcq' ); ?></p>\n\t\t\t<p>\n\t\t\t\t<a href=\"#TB_inline?width=800&height=600&inlineId=gmcq-import-format-help\" class=\"thickbox button\" style=\"margin-right:10px","php esc_html_e( 'Format Help', 'gmcq' ); ?></a>\n\t\t\t\t<a href=\"<?php echo esc_url( admin_url( 'admin-ajax.php?action=gmcq_download_sample_csv&_ajax_nonce=' . $sample_nonce ) ); ?>\" class=\"button","php esc_html_e( 'Download Sample CSV', 'gmcq' ); ?></a>\n\t\t\t</p>\n\n\t\t\t<!-- Preview form (step 1) -->\n\t\t\t<form id=\"gmcq-import-preview-form\" enctype=\"multipart/form-data","php wp_nonce_field( 'gmcq_import_nonce', '_ajax_nonce' ); ?>\n\t\t\t\t<table class=\"form-table","tr>\n\t\t\t\t\t\t<th><?php esc_html_e( 'CSV File', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<td><input type=\"file\" name=\"csv_file\" accept=\".csv","required></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Target Category', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<select name=\"category_id\" required>\n\t\t\t\t\t\t\t\t<option value=\"","php esc_html_e( 'Select', 'gmcq' ); ?></option>\n\t\t\t\t\t\t\t\t<?php foreach ( $cats['categories'] as $c ) : ?>\n\t\t\t\t\t\t\t\t\t<option value=\"<?php echo (int) $c->id; ?>","php echo esc_html( $c->name ); ?></option>\n\t\t\t\t\t\t\t\t<?php endforeach; ?>\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Add to Quiz (optional)', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<select name=\"target_quiz_id\">\n\t\t\t\t\t\t\t\t<option value=\"0","php esc_html_e( 'None', 'gmcq' ); ?></option>\n\t\t\t\t\t\t\t\t<?php foreach ( $quizzes['quizzes'] as $q ) : ?>\n\t\t\t\t\t\t\t\t\t<option value=\"<?php echo (int) $q->quiz_id; ?>\"><?php echo esc_html( $q->post_title ); ?></option>\n\t\t\t\t\t\t\t\t<?php endforeach; ?>\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t\t<p><button type=\"submit\" class=\"button button-primary\" id=\"gmcq-preview-btn","php esc_html_e( 'Preview Import', 'gmcq' ); ?></button></p>\n\t\t\t</form>\n\n\t\t\t<!-- Preview results (hidden until populated) -->\n\t\t\t<div id=\"gmcq-preview-results\" style=\"display:none;margin-top:20px","h3><?php esc_html_e( 'Preview Summary', 'gmcq' ); ?></h3>\n\t\t\t\t<div style=\"display:flex;gap:20px;margin-bottom:15px;flex-wrap:wrap\">\n\t\t\t\t\t<div class=\"gmcq-stat-box\" style=\"flex:1;min-width:150px;background:#f5f5f5;padding:15px;border-radius:4px;border:1px solid #ddd\">\n\t\t\t\t\t\t<div style=\"font-size:24px;font-weight:bold;color:#0073aa\" id=\"gmcq-stat-total\">0</div>\n\t\t\t\t\t\t<div style=\"font-size:13px;color:#666","php esc_html_e( 'Total Rows', 'gmcq' ); ?></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"gmcq-stat-box\" style=\"flex:1;min-width:150px;background:#f5f5f5;padding:15px;border-radius:4px;border:1px solid #ddd\">\n\t\t\t\t\t\t<div style=\"font-size:24px;font-weight:bold;color:#46b450\" id=\"gmcq-stat-valid\">0</div>\n\t\t\t\t\t\t<div style=\"font-size:13px;color:#666","php esc_html_e( 'Valid', 'gmcq' ); ?></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"gmcq-stat-box\" style=\"flex:1;min-width:150px;background:#f5f5f5;padding:15px;border-radius:4px;border:1px solid #ddd\">\n\t\t\t\t\t\t<div style=\"font-size:24px;font-weight:bold;color:#ffb900\" id=\"gmcq-stat-dupes\">0</div>\n\t\t\t\t\t\t<div style=\"font-size:13px;color:#666","php esc_html_e( 'Duplicates', 'gmcq' ); ?></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"gmcq-stat-box\" style=\"flex:1;min-width:150px;background:#f5f5f5;padding:15px;border-radius:4px;border:1px solid #ddd\">\n\t\t\t\t\t\t<div style=\"font-size:24px;font-weight:bold;color:#dc3232\" id=\"gmcq-stat-errors\">0</div>\n\t\t\t\t\t\t<div style=\"font-size:13px;color:#666","php esc_html_e( 'Errors', 'gmcq' ); ?></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<h4><?php esc_html_e( 'First 5 Rows', 'gmcq' ); ?></h4>\n\t\t\t\t<table class=\"widefat striped\" style=\"max-width:1000px","thead><tr>\n\t\t\t\t\t\t<th><?php esc_html_e( 'CSV Row', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Question', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Type', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Category', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Status', 'gmcq' ); ?></th>\n\t\t\t\t\t\t<th><?php esc_html_e( 'Message', 'gmcq' ); ?></th>\n\t\t\t\t\t</tr></thead>\n\t\t\t\t\t<tbody id=\"gmcq-preview-rows\"></tbody>\n\t\t\t\t</table>\n\n\t\t\t\t<p style=\"margin-top:15px\">\n\t\t\t\t\t<button type=\"button\" class=\"button button-primary button-large\" id=\"gmcq-confirm-btn","php esc_html_e( 'Confirm Import', 'gmcq' ); ?></button>\n\t\t\t\t\t<button type=\"button\" class=\"button button-secondary\" id=\"gmcq-cancel-btn\" style=\"margin-left:10px","php esc_html_e( 'Cancel', 'gmcq' ); ?></button>\n\t\t\t\t\t<input type=\"hidden\" id=\"gmcq-preview-token\" value=\"","input type=\"hidden\" id=\"gmcq-preview-import-id\" value=\"","p>\n\t\t\t</div>\n\n\t\t\t<div id=\"gmcq-import-result\"></div>\n\t\t</div>\n\n\t\t<!-- FORMAT HELP (for thickbox) -->\n\t\t<div id=\"gmcq-import-format-help\" style=\"display:none\">\n\t\t\t<div style=\"padding:20px","h2><?php esc_html_e( 'CSV Format Reference', 'gmcq' ); ?></h2>\n\t\t\t\t<p><strong><?php esc_html_e( 'Required columns:', 'gmcq' ); ?></strong></p>\n\t\t\t\t<table class=\"widefat striped\" style=\"max-width:600px","thead><tr><th>Column</th><th>Description</th></tr></thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr><td><code>question_text</code></td><td><?php esc_html_e( 'The question content (HTML allowed).', 'gmcq' ); ?></td></tr>\n\t\t\t\t\t\t<tr><td><code>option_a</code></td><td><?php esc_html_e( 'First answer option.', 'gmcq' ); ?></td></tr>\n\t\t\t\t\t\t<tr><td><code>option_b</code></td><td><?php esc_html_e( 'Second answer option.', 'gmcq' ); ?></td></tr>\n\t\t\t\t\t\t<tr><td><code>correct_answer</code></td><td><?php esc_html_e( 'Correct option letter(s): A, B, C, D, or A,C for multiple.', 'gmcq' ); ?></td></tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t\t<p><strong><?php esc_html_e( 'Optional columns:', 'gmcq' ); ?></strong></p>\n\t\t\t\t<table class=\"widefat striped\" style=\"max-width:600px","thead><tr><th>Column</th><th>Description</th><th>Default</th></tr></thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr><td><code>option_c</code></td><td><?php esc_html_e( 'Third answer option.', 'gmcq' ); ?></td><td>&mdash;</td></tr>\n\t\t\t\t\t\t<tr><td><code>option_d</code></td><td><?php esc_html_e( 'Fourth answer option.', 'gmcq' ); ?></td><td>&mdash;</td></tr>\n\t\t\t\t\t\t<tr><td><code>explanation</code></td><td><?php esc_html_e( 'Explanation shown after quiz.', 'gmcq' ); ?></td><td>&mdash;</td></tr>\n\t\t\t\t\t\t<tr><td><code>difficulty</code></td><td><?php esc_html_e( 'easy / medium / hard.', 'gmcq' ); ?></td><td>medium</td></tr>\n\t\t\t\t\t\t<tr><td><code>marks</code></td><td><?php esc_html_e( 'Points for correct answer.', 'gmcq' ); ?></td><td>1.00</td></tr>\n\t\t\t\t\t\t<tr><td><code>negative_marks</code></td><td><?php esc_html_e( 'Points deducted for wrong answer.', 'gmcq' ); ?></td><td>0.25</td></tr>\n\t\t\t\t\t\t<tr><td><code>question_type</code></td><td><?php esc_html_e( 'mcq_single / mcq_multiple / true_false (auto-detected if omitted).', 'gmcq' ); ?></td><td>auto</td></tr>\n\t\t\t\t\t\t<tr><td><code>category_slug</code></td><td><?php esc_html_e( 'Override target category per row (supports \"parent/child","format).', 'gmcq' ); ?></td><td>form default</td></tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<!-- IMPORT HISTORY CARD -->\n\t\t<div class=\"gmcq-card","h2><?php esc_html_e( 'Import History', 'gmcq' ); ?></h2>\n\t\t\t<div class=\"gmcq-filter-tabs","php\n\t\t\t\t$filters = [\n\t\t\t\t\t'all'       => __( 'All', 'gmcq' ),\n\t\t\t\t\t'completed' => __( 'Completed', 'gmcq' ),\n\t\t\t\t\t'failed'    => __( 'Failed', 'gmcq' ),\n\t\t\t\t\t'processing'=> __( 'Processing', 'gmcq' ),\n\t\t\t\t];\n\t\t\t\t$base = admin_url( 'admin.php?page=gmcq-import' );\n\t\t\t\tforeach ( $filters as $key => $label ) :\n\t\t\t\t\t$current = ( $key === $filter ) ? 'current' : '';\n\t\t\t\t\t$url = 'all' === $key ? $base : $base . '&filter=' . $key;\n\t\t\t\t\tprintf( '<a href=\"%s\" class=\"%s","s</a>', esc_url( $url ), esc_attr( $current ), esc_html( $label ) );\n\t\t\t\tendforeach;\n\t\t\t\t?>\n\t\t\t</div>\n\t\t\t<table class=\"widefat striped","thead><tr>\n\t\t\t\t\t<th><?php esc_html_e( 'File', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Status', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Imported / Total', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Duplicates', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Errors', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Date', 'gmcq' ); ?></th>\n\t\t\t\t\t<th><?php esc_html_e( 'Actions', 'gmcq' ); ?></th>\n\t\t\t\t</tr></thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t<?php if ( empty( $imports ) ) : ?>\n\t\t\t\t\t\t<tr><td colspan=\"7","php esc_html_e( 'No imports yet.', 'gmcq' ); ?></td></tr>\n\t\t\t\t\t<?php else : foreach ( $imports as $imp ) :\n\t\t\t\t\t\t$status_class = [\n\t\t\t\t\t\t\t'pending'     => 'gmcq-status-warning',\n\t\t\t\t\t\t\t'processing'  => 'gmcq-status-warning',\n\t\t\t\t\t\t\t'completed'   => 'gmcq-status-ok',\n\t\t\t\t\t\t\t'failed'      => 'gmcq-status-inactive',\n\t\t\t\t\t\t];\n\t\t\t\t\t\t$cls = $status_class[ $imp->status ] ?? '';\n\t\t\t\t\t\t$view_url = admin_url( 'admin.php?page=gmcq-import&action=view&id=' . $imp->id . '&TB_iframe=true&width=800&height=600' );\n\t\t\t\t\t?>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td><?php echo esc_html( $imp->filename ); ?></td>\n\t\t\t\t\t\t\t<td><span class=\"<?php echo esc_attr( $cls ); ?>\"><?php echo esc_html( ucfirst( $imp->status ) ); ?></span></td>\n\t\t\t\t\t\t\t<td><?php echo (int) $imp->imported; ?> / <?php echo (int) $imp->total_rows; ?></td>\n\t\t\t\t\t\t\t<td><?php echo (int) $imp->skipped_dupes; ?></td>\n\t\t\t\t\t\t\t<td><?php echo (int) $imp->skipped_errors; ?></td>\n\t\t\t\t\t\t\t<td><?php echo esc_html( $imp->started_at ); ?></td>\n\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t<a href=\"<?php echo esc_url( $view_url ); ?>\" class=\"thickbox\" title=","php esc_attr_e( 'View Details', 'gmcq' ); ?>","php esc_html_e( 'View', 'gmcq' ); ?></a>\n\t\t\t\t\t\t\t\t<?php if ( 'completed' === $imp->status || 'failed' === $imp->status ) : ?>\n\t\t\t\t\t\t\t\t\t<?php\n\t\t\t\t\t\t\t\t\t$backups = get_option( 'gmcq_backup_index', [] );\n\t\t\t\t\t\t\t\t\t$backup_file = '';\n\t\t\t\t\t\t\t\t\tforeach ( $backups as $b ) {\n\t\t\t\t\t\t\t\t\t\tif ( ( $b['import_id'] ?? 0 ) == $imp->id && $b['type'] === 'pre_import' ) {\n\t\t\t\t\t\t\t\t\t\t\t$backup_file = $b['file'];\n\t\t\t\t\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\tif ( $backup_file ) :\n\t\t\t\t\t\t\t\t\t\t$backup_url = wp_upload_dir()['baseurl'] . '/gmcq-backups/' . $backup_file;\n\t\t\t\t\t\t\t\t\t?>\n\t\t\t\t\t\t\t\t\t\t| <a href=\"<?php echo esc_url( $backup_url ); ?>","php esc_html_e( 'Download Backup', 'gmcq' ); ?></a>\n\t\t\t\t\t\t\t\t\t<?php endif; ?>\n\t\t\t\t\t\t\t\t<?php endif; ?>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t<?php endforeach; endif; ?>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>\n\t</div>\n\t<script>\n\tjQuery(function($){\n\t\tvar $previewForm = $('#gmcq-import-preview-form');\n\t\tvar $previewResults = $('#gmcq-preview-results');\n\t\tvar $confirmBtn = $('#gmcq-confirm-btn');\n\t\tvar $cancelBtn = $('#gmcq-cancel-btn');\n\t\tvar $resultDiv = $('#gmcq-import-result');\n\t\tvar nonce = '<?php echo esc_js( $nonce ); ?>';\n\t\tvar ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';\n\n\t\tfunction showNotice(msg, isError) {\n\t\t\t$resultDiv\n\t\t\t\t.css('border-left-color', isError ? '#dc3232' : '#46b450')\n\t\t\t\t.text(msg)\n\t\t\t\t.fadeIn(300)\n\t\t\t\t.delay(isError ? 5000 : 3000)\n\t\t\t\t.fadeOut(600);\n\t\t}\n\n\t\t$previewForm.on('submit', function(e){\n\t\t\te.preventDefault();\n\t\t\tvar $btn = $('#gmcq-preview-btn').prop('disabled', true).text('<?php echo esc_js( __( 'Previewing...', 'gmcq' ) ); ?>');\n\t\t\t$resultDiv.hide();\n\t\t\t$previewResults.hide();\n\n\t\t\tvar fd = new FormData(this);\n\t\t\tfd.append('action', 'gmcq_preview_import');\n\n\t\t\t$.ajax({\n\t\t\t\turl: ajaxUrl,\n\t\t\t\ttype: 'POST',\n\t\t\t\tdata: fd,\n\t\t\t\tprocessData: false,\n\t\t\t\tcontentType: false,\n\t\t\t\tsuccess: function(r){\n\t\t\t\t\t$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Preview Import', 'gmcq' ) ); ?>');\n\t\t\t\t\tif (r.success) {\n\t\t\t\t\t\tvar d = r.data;\n\t\t\t\t\t\t$('#gmcq-stat-total').text(d.total);\n\t\t\t\t\t\t$('#gmcq-stat-valid').text(d.valid);\n\t\t\t\t\t\t$('#gmcq-stat-dupes').text(d.dupes);\n\t\t\t\t\t\t$('#gmcq-stat-errors').text(d.errors);\n\n\t\t\t\t\t\tvar $tbody = $('#gmcq-preview-rows').empty();\n\t\t\t\t\t\t$.each(d.preview, function(i, row){\n\t\t\t\t\t\t\tvar statusClass = 'valid' === row.status ? 'gmcq-status-ok' :\n\t\t\t\t\t\t\t\t'duplicate' === row.status ? 'gmcq-status-warning' : 'gmcq-status-inactive';\n\t\t\t\t\t\t\tvar statusText = 'valid' === row.status ? '<?php echo esc_js( __( 'Valid', 'gmcq' ) ); ?>' :\n\t\t\t\t\t\t\t\t'duplicate' === row.status ? '<?php echo esc_js( __( 'Duplicate', 'gmcq' ) ); ?>' : '<?php echo esc_js( __( 'Error', 'gmcq' ) ); ?>';\n\t\t\t\t\t\t\t$tbody.append(\n\t\t\t\t\t\t\t\t'<tr>' +\n\t\t\t\t\t\t\t\t'<td>' + row.row + '</td>' +\n\t\t\t\t\t\t\t\t'<td>' + row.question + '</td>' +\n\t\t\t\t\t\t\t\t'<td>' + row.type + '</td>' +\n\t\t\t\t\t\t\t\t'<td>' + row.category + '</td>' +\n\t\t\t\t\t\t\t\t'<td><span class=\"' + statusClass + '"," + statusText + '</span></td>' +\n\t\t\t\t\t\t\t\t'<td>' + row.message + '</td>' +\n\t\t\t\t\t\t\t\t'</tr>'\n\t\t\t\t\t\t\t);\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t$('#gmcq-preview-token').val(d.preview_token);\n\t\t\t\t\t\t$('#gmcq-preview-import-id').val(d.import_id);\n\t\t\t\t\t\t$previewResults.fadeIn(300);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowNotice(r.data.message || '<?php echo esc_js( __( 'Preview failed.","gmcq' ) ); ?>",true],{"Server error.', 'gmcq' ) ); ?>', true);\n\t\t\t\t\t$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Preview Import', 'gmcq' ) ); ?>":""},{"#gmcq-preview-token').val();\n\t\t\tif (!token) return;\n\t\t\t$confirmBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'gmcq' ) ); ?>');\n\t\t\t$cancelBtn.prop('disabled":true,"action":"gmcq_commit_import","preview_token":"token","ajax_nonce":"nonce"},{"Confirm Import', 'gmcq' ) ); ?>');\n\t\t\t\t$cancelBtn.prop('disabled', false);\n\t\t\t\tif (r.success) {\n\t\t\t\t\tvar d = r.data;\n\t\t\t\t\tshowNotice(\n\t\t\t\t\t\t'<?php echo esc_js( __( 'Import completed.', 'gmcq' ) ); ?> ' + d.imported +\n\t\t\t\t\t\t', <?php echo esc_js( __(":"uplicates:'","gmcq' ) ); ?> ' + d.dupes +\n\t\t\t\t\t\t', <?php echo esc_js( __(":"rrors:'","gmcq' ) ); ?>":"d.errors\n\t\t\t\t\t);\n\t\t\t\t\tsetTimeout(function(){ location.reload();"},{"<?php echo esc_js( __( 'Import failed.', 'gmcq' ) ); ?>":true,"Server error.', 'gmcq' ) ); ?>', true);\n\t\t\t\t$confirmBtn.prop('disabled', false).text('<?php echo esc_js( __( 'Confirm Import', 'gmcq' ) ); ?>');\n\t\t\t\t$cancelBtn.prop('disabled":false,"HELPER":"GET IMPORTS WITH FILTER\n// ========================================================================\n\nfunction gmcq_get_imports( array $args = [] ): array {\n\tglobal $wpdb;\n\t$filter = isset( $args['filter'] ) ? sanitize_key( $args['filter'] ) : '';\n\t$where  = '1=1';\n\tswitch ( $filter ) {\n\t\tcase 'completed':\n\t\t\t$where =","completed'\";\n\t\t\tbreak;\n\t\tcase 'failed":"where =","failed'\";\n\t\t\tbreak;\n\t\tcase 'processing":"where =","processing":"break;"},{"\n\t) ?: [];\n}\n\n// ========================================================================\n// IMPORT COMPLETION HOOK (fires after import completes)\n// ========================================================================\n\nadd_action( 'gmcq_import_completed', function ( int $import_id ): void {\n\tglobal $wpdb;\n\t$import = $wpdb->get_row(\n\t\t$wpdb->prepare(":"ELECT * FROM {$wpdb->prefix}gmcq_imports WHERE id = %d","gmcq_quiz_questions_changed":"int) $import->target_quiz_id );"}]
+<?php
+/**
+ * GMCQ CSV Import — upload, validate, preview, import, history.
+ *
+ * Phase 1 scope:
+ * - Single-pass import only; no resume/progress persistence columns.
+ * - Duplicate detection through normalized question_hash.
+ * - Pre-import JSON backup.
+ * - Optional assignment to a quiz through gmcq_question_map.
+ */
+defined( 'ABSPATH' ) || exit;
+
+// ========================================================================
+// CONCURRENT IMPORT LOCK
+// ========================================================================
+
+function gmcq_acquire_import_lock(): bool|WP_Error {
+	$lock_key = 'gmcq_import_lock';
+	if ( get_transient( $lock_key ) ) {
+		return new WP_Error( 'import_locked', __( 'Another import is currently running. Please wait.', 'gmcq' ) );
+	}
+	set_transient( $lock_key, get_current_user_id(), 300 );
+	return true;
+}
+
+function gmcq_release_import_lock(): void {
+	delete_transient( 'gmcq_import_lock' );
+}
+
+function gmcq_backup_before_import( int $import_id ): string {
+	$filename = gmcq_create_backup( 'pre_import', '', array() );
+
+	$backups = get_option( 'gmcq_backup_index', array() );
+	$last    = array_key_last( $backups );
+	if ( null !== $last ) {
+		$backups[ $last ]['import_id'] = $import_id;
+		update_option( 'gmcq_backup_index', $backups );
+	}
+
+	return $filename;
+}
+
+// ========================================================================
+// CSV PARSING + VALIDATION
+// ========================================================================
+
+function gmcq_csv_required_columns(): array {
+	return array( 'question_text', 'option_a', 'option_b', 'correct_answer' );
+}
+
+function gmcq_csv_optional_columns(): array {
+	return array(
+		'option_c',
+		'option_d',
+		'explanation',
+		'difficulty',
+		'marks',
+		'negative_marks',
+		'question_type',
+		'category_slug',
+	);
+}
+
+function gmcq_normalize_csv_header( string $header ): string {
+	$header = strtolower( trim( preg_replace( '/^\xEF\xBB\xBF/', '', $header ) ) );
+	$header = preg_replace( '/[^a-z0-9]+/', '_', $header );
+	return trim( (string) $header, '_' );
+}
+
+function gmcq_parse_csv_file( string $filepath ): array|WP_Error {
+	if ( ! file_exists( $filepath ) || ! is_readable( $filepath ) ) {
+		return new WP_Error( 'file_unreadable', __( 'Uploaded CSV file could not be read.', 'gmcq' ) );
+	}
+
+	$handle = fopen( $filepath, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+	if ( ! $handle ) {
+		return new WP_Error( 'file_open_failed', __( 'Unable to open uploaded CSV file.', 'gmcq' ) );
+	}
+
+	$headers = fgetcsv( $handle );
+	if ( empty( $headers ) || ! is_array( $headers ) ) {
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error( 'missing_header', __( 'CSV header row is missing.', 'gmcq' ) );
+	}
+
+	$headers = array_map( 'gmcq_normalize_csv_header', $headers );
+	$missing = array_diff( gmcq_csv_required_columns(), $headers );
+	if ( ! empty( $missing ) ) {
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error(
+			'missing_columns',
+			sprintf( __( 'Missing required column(s): %s', 'gmcq' ), implode( ', ', $missing ) )
+		);
+	}
+
+	$rows       = array();
+	$row_number = 1;
+	while ( false !== ( $data = fgetcsv( $handle ) ) ) {
+		$row_number++;
+
+		if ( 1 === count( $data ) && '' === trim( (string) $data[0] ) ) {
+			continue;
+		}
+
+		$row = array();
+		foreach ( $headers as $index => $header ) {
+			$row[ $header ] = isset( $data[ $index ] ) ? trim( (string) $data[ $index ] ) : '';
+		}
+		$row['_row_number'] = $row_number;
+		$rows[]             = $row;
+	}
+
+	fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+
+	return array(
+		'headers' => $headers,
+		'rows'    => $rows,
+	);
+}
+
+function gmcq_resolve_import_category( string $category_slug, int $fallback_category_id ) {
+	$category_slug = trim( $category_slug );
+	if ( '' === $category_slug ) {
+		return $fallback_category_id > 0 ? $fallback_category_id : new WP_Error( 'category_required', __( 'No category provided for this row.', 'gmcq' ) );
+	}
+
+	global $wpdb;
+	$p     = $wpdb->prefix;
+	$parts = array_values( array_filter( array_map( 'trim', explode( '/', $category_slug ) ) ) );
+
+	if ( empty( $parts ) ) {
+		return $fallback_category_id > 0 ? $fallback_category_id : new WP_Error( 'category_required', __( 'No category provided for this row.', 'gmcq' ) );
+	}
+
+	if ( count( $parts ) > 2 ) {
+		return new WP_Error( 'category_depth', __( 'Category paths support only parent/child depth in Phase 1.', 'gmcq' ) );
+	}
+
+	if ( 1 === count( $parts ) ) {
+		$slug = sanitize_title( $parts[0] );
+		$id   = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$p}gmcq_categories WHERE slug = %s AND is_active = 1 LIMIT 1", $slug )
+		);
+		return $id > 0 ? $id : new WP_Error( 'category_not_found', sprintf( __( 'Category slug not found: %s', 'gmcq' ), $slug ) );
+	}
+
+	$parent_slug = sanitize_title( $parts[0] );
+	$child_slug  = sanitize_title( $parts[1] );
+	$full_slug   = $parent_slug . '-' . $child_slug;
+
+	$id = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT child.id
+			 FROM {$p}gmcq_categories child
+			 JOIN {$p}gmcq_categories parent ON parent.id = child.parent_id
+			 WHERE parent.slug = %s AND child.slug IN (%s, %s)
+			 AND parent.is_active = 1 AND child.is_active = 1
+			 LIMIT 1",
+			$parent_slug,
+			$child_slug,
+			$full_slug
+		)
+	);
+
+	return $id > 0 ? $id : new WP_Error( 'category_not_found', sprintf( __( 'Category path not found: %s', 'gmcq' ), $category_slug ) );
+}
+
+function gmcq_csv_correct_letters( string $correct_answer ): array {
+	$letters = preg_split( '/\s*,\s*/', strtoupper( trim( $correct_answer ) ) );
+	$letters = array_values( array_filter( array_unique( $letters ), static function ( $letter ) {
+		return in_array( $letter, array( 'A', 'B', 'C', 'D' ), true );
+	} ) );
+	return $letters;
+}
+
+function gmcq_csv_row_to_question_data( array $row, int $target_category_id, int $import_id = 0 ) {
+	$category_id = gmcq_resolve_import_category( $row['category_slug'] ?? '', $target_category_id );
+	if ( is_wp_error( $category_id ) ) {
+		return $category_id;
+	}
+
+	$question_type = ! empty( $row['question_type'] ) ? sanitize_key( $row['question_type'] ) : 'mcq_single';
+	if ( ! in_array( $question_type, array( 'mcq_single', 'mcq_multiple', 'true_false' ), true ) ) {
+		$question_type = 'mcq_single';
+	}
+
+	$correct_letters = gmcq_csv_correct_letters( $row['correct_answer'] ?? '' );
+	if ( empty( $correct_letters ) ) {
+		return new WP_Error( 'invalid_correct_answer', __( 'Correct answer must be A, B, C, D, or comma-separated letters.', 'gmcq' ) );
+	}
+
+	if ( count( $correct_letters ) > 1 ) {
+		$question_type = 'mcq_multiple';
+	}
+
+	$answers = array();
+	foreach ( array( 'A' => 'option_a', 'B' => 'option_b', 'C' => 'option_c', 'D' => 'option_d' ) as $letter => $column ) {
+		$text = isset( $row[ $column ] ) ? trim( (string) $row[ $column ] ) : '';
+		if ( '' === $text ) {
+			continue;
+		}
+		$answers[] = array(
+			'answer_text' => $text,
+			'is_correct'  => in_array( $letter, $correct_letters, true ) ? 1 : 0,
+		);
+	}
+
+	$data = array(
+		'category_id'    => (int) $category_id,
+		'question_text'  => $row['question_text'] ?? '',
+		'question_type'  => $question_type,
+		'explanation'    => $row['explanation'] ?? '',
+		'difficulty'     => ! empty( $row['difficulty'] ) ? sanitize_key( $row['difficulty'] ) : 'medium',
+		'marks'          => isset( $row['marks'] ) && '' !== $row['marks'] ? (float) $row['marks'] : 1.00,
+		'negative_marks' => isset( $row['negative_marks'] ) && '' !== $row['negative_marks'] ? (float) $row['negative_marks'] : 0.25,
+		'answers'        => $answers,
+		'import_id'      => $import_id,
+	);
+
+	if ( 'true_false' === $question_type ) {
+		$first = $correct_letters[0] ?? 'A';
+		$data['true_is_correct'] = in_array( $first, array( 'A', 'TRUE', 'T', '1' ), true ) ? 1 : 0;
+	}
+
+	return $data;
+}
+
+function gmcq_validate_import_rows( array $rows, int $target_category_id ): array {
+	global $wpdb;
+	$p = $wpdb->prefix;
+
+	$seen_hashes = array();
+	$valid       = 0;
+	$dupes       = 0;
+	$errors      = 0;
+	$preview     = array();
+	$normalized  = array();
+
+	foreach ( $rows as $index => $row ) {
+		$row_number = (int) ( $row['_row_number'] ?? ( $index + 2 ) );
+		$status     = 'valid';
+		$message    = __( 'Ready to import.', 'gmcq' );
+		$data       = gmcq_csv_row_to_question_data( $row, $target_category_id, 0 );
+
+		if ( is_wp_error( $data ) ) {
+			$status  = 'error';
+			$message = $data->get_error_message();
+		} else {
+			$validation = gmcq_validate_question_data( $data, 'create' );
+			if ( is_wp_error( $validation ) ) {
+				$status  = 'error';
+				$message = $validation->get_error_message();
+			} else {
+				$hash = gmcq_generate_question_hash( $data['question_text'] );
+				$exists = (int) $wpdb->get_var(
+					$wpdb->prepare( "SELECT COUNT(*) FROM {$p}gmcq_questions WHERE question_hash = %s", $hash )
+				);
+
+				if ( $exists > 0 || isset( $seen_hashes[ $hash ] ) ) {
+					$status  = 'duplicate';
+					$message = __( 'Duplicate question hash; this row will be skipped.', 'gmcq' );
+				} else {
+					$seen_hashes[ $hash ] = true;
+					$data['_row_number']  = $row_number;
+					$normalized[]         = $data;
+				}
+			}
+		}
+
+		if ( 'valid' === $status ) {
+			$valid++;
+		} elseif ( 'duplicate' === $status ) {
+			$dupes++;
+		} else {
+			$errors++;
+		}
+
+		if ( count( $preview ) < 5 ) {
+			$preview[] = array(
+				'row'           => $row_number,
+				'question_text' => $row['question_text'] ?? '',
+				'status'        => $status,
+				'message'       => $message,
+			);
+		}
+	}
+
+	return array(
+		'total_rows' => count( $rows ),
+		'valid'      => $valid,
+		'duplicates' => $dupes,
+		'errors'     => $errors,
+		'preview'    => $preview,
+		'rows'       => $normalized,
+	);
+}
+
+// ========================================================================
+// IMPORT EXECUTION
+// ========================================================================
+
+function gmcq_create_import_record( string $filename, int $total_rows, int $target_category_id, int $target_quiz_id ) {
+	global $wpdb;
+	$inserted = $wpdb->insert(
+		$wpdb->prefix . 'gmcq_imports',
+		array(
+			'filename'           => sanitize_file_name( $filename ),
+			'total_rows'         => $total_rows,
+			'status'             => 'pending',
+			'target_category_id' => $target_category_id > 0 ? $target_category_id : null,
+			'target_quiz_id'     => $target_quiz_id > 0 ? $target_quiz_id : null,
+			'user_id'            => get_current_user_id(),
+		),
+		array( '%s', '%d', '%s', '%d', '%d', '%d' )
+	);
+
+	if ( false === $inserted ) {
+		return new WP_Error( 'import_record_failed', $wpdb->last_error ?: __( 'Failed to create import record.', 'gmcq' ) );
+	}
+
+	return (int) $wpdb->insert_id;
+}
+
+function gmcq_assign_imported_question_to_quiz( int $question_id, int $quiz_id ): bool|WP_Error {
+	if ( $question_id <= 0 || $quiz_id <= 0 ) {
+		return true;
+	}
+
+	global $wpdb;
+	$p = $wpdb->prefix;
+
+	$sort_order = (int) $wpdb->get_var(
+		$wpdb->prepare( "SELECT COALESCE(MAX(sort_order), -1) + 1 FROM {$p}gmcq_question_map WHERE quiz_id = %d", $quiz_id )
+	);
+
+	$inserted = $wpdb->insert(
+		$p . 'gmcq_question_map',
+		array(
+			'quiz_id'     => $quiz_id,
+			'question_id' => $question_id,
+			'sort_order'  => $sort_order,
+		),
+		array( '%d', '%d', '%d' )
+	);
+
+	if ( false === $inserted ) {
+		if ( false !== stripos( $wpdb->last_error, 'Duplicate' ) ) {
+			return true;
+		}
+		return new WP_Error( 'quiz_map_failed', $wpdb->last_error ?: __( 'Failed to assign question to quiz.', 'gmcq' ) );
+	}
+
+	do_action( 'gmcq_question_added_to_quiz', $question_id, $quiz_id );
+	return true;
+}
+
+function gmcq_run_csv_import( array $payload ): array|WP_Error {
+	global $wpdb;
+	$p = $wpdb->prefix;
+
+	$lock = gmcq_acquire_import_lock();
+	if ( is_wp_error( $lock ) ) {
+		return $lock;
+	}
+
+	$import_id       = 0;
+	$imported        = 0;
+	$skipped_dupes   = (int) ( $payload['duplicates'] ?? 0 );
+	$skipped_errors  = (int) ( $payload['errors'] ?? 0 );
+	$error_log       = array();
+	$target_quiz_id  = (int) ( $payload['target_quiz_id'] ?? 0 );
+	$target_category = (int) ( $payload['target_category_id'] ?? 0 );
+
+	try {
+		$import_id = gmcq_create_import_record(
+			$payload['filename'] ?? 'import.csv',
+			(int) ( $payload['total_rows'] ?? 0 ),
+			$target_category,
+			$target_quiz_id
+		);
+
+		if ( is_wp_error( $import_id ) ) {
+			throw new Exception( $import_id->get_error_message() );
+		}
+
+		if ( (int) gmcq_get_setting( 'backup_enabled', 1 ) ) {
+			gmcq_backup_before_import( (int) $import_id );
+		}
+
+		$wpdb->update(
+			$p . 'gmcq_imports',
+			array( 'status' => 'processing' ),
+			array( 'id' => (int) $import_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		foreach ( (array) ( $payload['rows'] ?? array() ) as $row ) {
+			$row['_row_number'] = (int) ( $row['_row_number'] ?? 0 );
+			$row['import_id']   = (int) $import_id;
+
+			$result = gmcq_create_question( $row );
+			if ( is_wp_error( $result ) ) {
+				if ( 'duplicate_question' === $result->get_error_code() ) {
+					$skipped_dupes++;
+				} else {
+					$skipped_errors++;
+				}
+				$error_log[] = array(
+					'row'     => $row['_row_number'],
+					'message' => $result->get_error_message(),
+				);
+				continue;
+			}
+
+			$question_id = (int) $result;
+			if ( $target_quiz_id > 0 ) {
+				$map = gmcq_assign_imported_question_to_quiz( $question_id, $target_quiz_id );
+				if ( is_wp_error( $map ) ) {
+					$error_log[] = array(
+						'row'     => $row['_row_number'],
+						'message' => $map->get_error_message(),
+					);
+				}
+			}
+
+			$imported++;
+		}
+
+		$wpdb->update(
+			$p . 'gmcq_imports',
+			array(
+				'imported'       => $imported,
+				'skipped_dupes'  => $skipped_dupes,
+				'skipped_errors' => $skipped_errors,
+				'status'         => 'completed',
+				'error_log'      => wp_json_encode( $error_log ),
+				'completed_at'   => current_time( 'mysql' ),
+			),
+			array( 'id' => (int) $import_id ),
+			array( '%d', '%d', '%d', '%s', '%s', '%s' ),
+			array( '%d' )
+		);
+
+		do_action( 'gmcq_import_completed', (int) $import_id );
+		gmcq_clear_dashboard_cache( 'import' );
+
+		return array(
+			'import_id'       => (int) $import_id,
+			'imported'        => $imported,
+			'skipped_dupes'   => $skipped_dupes,
+			'skipped_errors'  => $skipped_errors,
+			'errors'          => $error_log,
+		);
+	} catch ( Exception $e ) {
+		if ( $import_id > 0 ) {
+			$wpdb->update(
+				$p . 'gmcq_imports',
+				array(
+					'status'       => 'failed',
+					'error_log'    => wp_json_encode( array( array( 'message' => $e->getMessage() ) ) ),
+					'completed_at' => current_time( 'mysql' ),
+				),
+				array( 'id' => (int) $import_id ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+		}
+		return new WP_Error( 'import_failed', $e->getMessage() );
+	} finally {
+		gmcq_release_import_lock();
+	}
+}
+
+function gmcq_get_import_history( int $limit = 20 ): array {
+	global $wpdb;
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT i.*, u.display_name
+			 FROM {$wpdb->prefix}gmcq_imports i
+			 LEFT JOIN {$wpdb->users} u ON u.ID = i.user_id
+			 ORDER BY i.started_at DESC
+			 LIMIT %d",
+			$limit
+		)
+	) ?: array();
+}
+
+// ========================================================================
+// POST HANDLERS
+// ========================================================================
+
+function gmcq_handle_import_upload(): void {
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_die( esc_html__( 'Permission denied.', 'gmcq' ) );
+	}
+
+	check_admin_referer( 'gmcq_import_upload' );
+
+	if ( empty( $_FILES['gmcq_csv_file']['tmp_name'] ) ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( __( 'Please choose a CSV file.', 'gmcq' ) ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$file = $_FILES['gmcq_csv_file'];
+	$name = isset( $file['name'] ) ? sanitize_file_name( wp_unslash( $file['name'] ) ) : 'import.csv';
+
+	if ( ! empty( $file['error'] ) ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( __( 'File upload failed.', 'gmcq' ) ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$ext = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+	if ( 'csv' !== $ext ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( __( 'Only CSV files are allowed.', 'gmcq' ) ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$target_category_id = isset( $_POST['target_category_id'] ) ? (int) $_POST['target_category_id'] : 0;
+	$target_quiz_id     = isset( $_POST['target_quiz_id'] ) ? (int) $_POST['target_quiz_id'] : 0;
+
+	$parsed = gmcq_parse_csv_file( $file['tmp_name'] );
+	if ( is_wp_error( $parsed ) ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( $parsed->get_error_message() ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$validation = gmcq_validate_import_rows( $parsed['rows'], $target_category_id );
+	$token      = wp_generate_password( 24, false, false );
+	$payload    = array(
+		'filename'           => $name,
+		'target_category_id' => $target_category_id,
+		'target_quiz_id'     => $target_quiz_id,
+		'total_rows'         => $validation['total_rows'],
+		'valid'              => $validation['valid'],
+		'duplicates'         => $validation['duplicates'],
+		'errors'             => $validation['errors'],
+		'preview'            => $validation['preview'],
+		'rows'               => $validation['rows'],
+	);
+
+	set_transient( 'gmcq_import_preview_' . $token, $payload, 30 * MINUTE_IN_SECONDS );
+
+	wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'preview' => $token ), admin_url( 'admin.php' ) ) );
+	exit;
+}
+add_action( 'admin_post_gmcq_import_upload', 'gmcq_handle_import_upload' );
+
+function gmcq_handle_import_confirm(): void {
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_die( esc_html__( 'Permission denied.', 'gmcq' ) );
+	}
+
+	check_admin_referer( 'gmcq_import_confirm' );
+
+	$token   = isset( $_POST['preview_token'] ) ? sanitize_text_field( wp_unslash( $_POST['preview_token'] ) ) : '';
+	$payload = $token ? get_transient( 'gmcq_import_preview_' . $token ) : false;
+
+	if ( false === $payload || ! is_array( $payload ) ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( __( 'Import preview expired. Please upload the CSV again.', 'gmcq' ) ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$result = gmcq_run_csv_import( $payload );
+	delete_transient( 'gmcq_import_preview_' . $token );
+
+	if ( is_wp_error( $result ) ) {
+		wp_safe_redirect( add_query_arg( array( 'page' => 'gmcq-import', 'gmcq_error' => rawurlencode( $result->get_error_message() ) ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	wp_safe_redirect(
+		add_query_arg(
+			array(
+				'page'      => 'gmcq-import',
+				'import_id' => (int) $result['import_id'],
+				'imported'  => (int) $result['imported'],
+				'dupes'     => (int) $result['skipped_dupes'],
+				'errors'    => (int) $result['skipped_errors'],
+			),
+			admin_url( 'admin.php' )
+		)
+	);
+	exit;
+}
+add_action( 'admin_post_gmcq_import_confirm', 'gmcq_handle_import_confirm' );
+
+add_action(
+	'gmcq_import_completed',
+	static function ( int $import_id ): void {
+		global $wpdb;
+		$import = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}gmcq_imports WHERE id = %d", $import_id )
+		);
+
+		if ( function_exists( 'gmcq_recalculate_category_counts' ) ) {
+			gmcq_recalculate_category_counts();
+		}
+		if ( function_exists( 'gmcq_recalculate_usage_counts' ) ) {
+			gmcq_recalculate_usage_counts();
+		}
+		if ( $import && ! empty( $import->target_quiz_id ) ) {
+			do_action( 'gmcq_quiz_questions_changed', (int) $import->target_quiz_id );
+		}
+	},
+	10,
+	1
+);
+
+// ========================================================================
+// ADMIN UI
+// ========================================================================
+
+function gmcq_get_import_quiz_options(): array {
+	return get_posts(
+		array(
+			'post_type'      => 'gmcq_quiz',
+			'post_status'    => array( 'publish', 'draft' ),
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+		)
+	) ?: array();
+}
+
+function gmcq_render_import_page(): void {
+	if ( ! current_user_can( 'manage_gmcq' ) ) {
+		wp_die( esc_html__( 'You do not have permission to access this page.', 'gmcq' ) );
+	}
+
+	$preview_token = isset( $_GET['preview'] ) ? sanitize_text_field( wp_unslash( $_GET['preview'] ) ) : '';
+	$preview       = $preview_token ? get_transient( 'gmcq_import_preview_' . $preview_token ) : false;
+	$cats          = gmcq_get_categories( array( 'filter' => 'active', 'per_page' => -1 ) );
+	$quizzes       = gmcq_get_import_quiz_options();
+	$history       = gmcq_get_import_history( 20 );
+	?>
+	<div class="wrap gmcq-dashboard-wrap">
+		<h1><?php printf( '<a href="%s">%s</a> &rsaquo; %s', esc_url( admin_url( 'admin.php?page=gmcq-dashboard' ) ), esc_html__( 'GMCQ', 'gmcq' ), esc_html__( 'CSV Import', 'gmcq' ) ); ?></h1>
+
+		<?php if ( isset( $_GET['gmcq_error'] ) ) : ?>
+			<div class="notice notice-error"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['gmcq_error'] ) ) ); ?></p></div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['import_id'] ) ) : ?>
+			<div class="notice notice-success"><p>
+				<?php
+				printf(
+					esc_html__( 'Import #%1$d completed. Imported: %2$d, duplicates skipped: %3$d, errors skipped: %4$d.', 'gmcq' ),
+					(int) $_GET['import_id'],
+					isset( $_GET['imported'] ) ? (int) $_GET['imported'] : 0,
+					isset( $_GET['dupes'] ) ? (int) $_GET['dupes'] : 0,
+					isset( $_GET['errors'] ) ? (int) $_GET['errors'] : 0
+				);
+				?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=gmcq-questions' ) ); ?>"><?php esc_html_e( 'View Questions', 'gmcq' ); ?></a>
+			</p></div>
+		<?php endif; ?>
+
+		<?php if ( is_array( $preview ) ) : ?>
+			<?php gmcq_render_import_preview( $preview_token, $preview ); ?>
+		<?php else : ?>
+			<div class="gmcq-card" style="max-width:900px">
+				<h2><?php esc_html_e( 'Upload CSV', 'gmcq' ); ?></h2>
+				<p><?php esc_html_e( 'Upload a CSV file to validate and preview before importing. Required columns: question_text, option_a, option_b, correct_answer.', 'gmcq' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+					<input type="hidden" name="action" value="gmcq_import_upload">
+					<?php wp_nonce_field( 'gmcq_import_upload' ); ?>
+					<table class="form-table">
+						<tr>
+							<th scope="row"><label for="gmcq_csv_file"><?php esc_html_e( 'CSV File', 'gmcq' ); ?> <span style="color:red">*</span></label></th>
+							<td><input type="file" name="gmcq_csv_file" id="gmcq_csv_file" accept=".csv,text/csv" required></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="target_category_id"><?php esc_html_e( 'Target Category', 'gmcq' ); ?></label></th>
+							<td>
+								<select name="target_category_id" id="target_category_id">
+									<option value="0"><?php esc_html_e( '— Select if CSV rows do not use category_slug —', 'gmcq' ); ?></option>
+									<?php foreach ( $cats['categories'] as $cat ) : ?>
+										<option value="<?php echo (int) $cat->id; ?>"><?php echo esc_html( ( ! empty( $cat->parent_id ) ? '— ' : '' ) . $cat->name . ' (' . $cat->slug . ')' ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Questions must resolve to a leaf category. Row-level category_slug overrides this value.', 'gmcq' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="target_quiz_id"><?php esc_html_e( 'Assign to Quiz', 'gmcq' ); ?></label></th>
+							<td>
+								<select name="target_quiz_id" id="target_quiz_id">
+									<option value="0"><?php esc_html_e( 'Do not assign to quiz', 'gmcq' ); ?></option>
+									<?php foreach ( $quizzes as $quiz ) : ?>
+										<option value="<?php echo (int) $quiz->ID; ?>"><?php echo esc_html( $quiz->post_title ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+					</table>
+					<p class="submit"><button type="submit" class="button button-primary"><?php esc_html_e( 'Validate & Preview', 'gmcq' ); ?></button></p>
+				</form>
+			</div>
+		<?php endif; ?>
+
+		<?php gmcq_render_import_format_help(); ?>
+		<?php gmcq_render_import_history( $history ); ?>
+	</div>
+	<?php
+}
+
+function gmcq_render_import_preview( string $token, array $preview ): void {
+	?>
+	<div class="gmcq-card" style="max-width:1000px">
+		<h2><?php esc_html_e( 'Preview & Validate', 'gmcq' ); ?></h2>
+		<p><strong><?php echo esc_html( $preview['filename'] ?? '' ); ?></strong></p>
+		<ul style="display:flex;gap:20px;list-style:none;margin-left:0">
+			<li><strong><?php echo (int) $preview['total_rows']; ?></strong> <?php esc_html_e( 'total rows', 'gmcq' ); ?></li>
+			<li><strong style="color:#46b450"><?php echo (int) $preview['valid']; ?></strong> <?php esc_html_e( 'valid', 'gmcq' ); ?></li>
+			<li><strong style="color:#ffb900"><?php echo (int) $preview['duplicates']; ?></strong> <?php esc_html_e( 'duplicates', 'gmcq' ); ?></li>
+			<li><strong style="color:#dc3232"><?php echo (int) $preview['errors']; ?></strong> <?php esc_html_e( 'errors', 'gmcq' ); ?></li>
+		</ul>
+
+		<table class="wp-list-table widefat fixed striped">
+			<thead><tr><th style="width:80px"><?php esc_html_e( 'Row', 'gmcq' ); ?></th><th><?php esc_html_e( 'Question', 'gmcq' ); ?></th><th style="width:120px"><?php esc_html_e( 'Status', 'gmcq' ); ?></th><th><?php esc_html_e( 'Message', 'gmcq' ); ?></th></tr></thead>
+			<tbody>
+				<?php foreach ( (array) $preview['preview'] as $row ) : ?>
+					<tr>
+						<td><?php echo (int) $row['row']; ?></td>
+						<td><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $row['question_text'] ), 18 ) ); ?></td>
+						<td><?php echo esc_html( ucfirst( $row['status'] ) ); ?></td>
+						<td><?php echo esc_html( $row['message'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:15px">
+			<input type="hidden" name="action" value="gmcq_import_confirm">
+			<input type="hidden" name="preview_token" value="<?php echo esc_attr( $token ); ?>">
+			<?php wp_nonce_field( 'gmcq_import_confirm' ); ?>
+			<button type="submit" class="button button-primary" <?php disabled( empty( $preview['valid'] ) ); ?>><?php esc_html_e( 'Import Valid Rows', 'gmcq' ); ?></button>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=gmcq-import' ) ); ?>"><?php esc_html_e( 'Cancel', 'gmcq' ); ?></a>
+		</form>
+	</div>
+	<?php
+}
+
+function gmcq_render_import_format_help(): void {
+	?>
+	<div class="gmcq-card" style="max-width:1000px">
+		<h2><?php esc_html_e( 'CSV Format', 'gmcq' ); ?></h2>
+		<p><code>question_text,option_a,option_b,option_c,option_d,correct_answer,explanation,difficulty,marks,negative_marks,question_type,category_slug</code></p>
+		<p class="description"><?php esc_html_e( 'correct_answer accepts A, B, C, D, or comma-separated values like A,C. category_slug can be a slug or parent/child path.', 'gmcq' ); ?></p>
+	</div>
+	<?php
+}
+
+function gmcq_render_import_history( array $history ): void {
+	?>
+	<div class="gmcq-card" style="max-width:1000px">
+		<h2><?php esc_html_e( 'Import History', 'gmcq' ); ?></h2>
+		<table class="wp-list-table widefat fixed striped">
+			<thead><tr><th><?php esc_html_e( 'File', 'gmcq' ); ?></th><th><?php esc_html_e( 'Status', 'gmcq' ); ?></th><th><?php esc_html_e( 'Rows', 'gmcq' ); ?></th><th><?php esc_html_e( 'Imported', 'gmcq' ); ?></th><th><?php esc_html_e( 'Skipped', 'gmcq' ); ?></th><th><?php esc_html_e( 'User', 'gmcq' ); ?></th><th><?php esc_html_e( 'Started', 'gmcq' ); ?></th></tr></thead>
+			<tbody>
+				<?php if ( empty( $history ) ) : ?>
+					<tr><td colspan="7"><?php esc_html_e( 'No imports yet.', 'gmcq' ); ?></td></tr>
+				<?php else : foreach ( $history as $import ) : ?>
+					<tr>
+						<td><strong><?php echo esc_html( $import->filename ); ?></strong><br><span class="description">#<?php echo (int) $import->id; ?></span></td>
+						<td><?php echo esc_html( ucfirst( $import->status ) ); ?></td>
+						<td><?php echo (int) $import->total_rows; ?></td>
+						<td><?php echo (int) $import->imported; ?></td>
+						<td><?php echo (int) $import->skipped_dupes; ?> <?php esc_html_e( 'dupes', 'gmcq' ); ?> / <?php echo (int) $import->skipped_errors; ?> <?php esc_html_e( 'errors', 'gmcq' ); ?></td>
+						<td><?php echo esc_html( $import->display_name ?: __( 'Unknown', 'gmcq' ) ); ?></td>
+						<td><?php echo esc_html( $import->started_at ); ?></td>
+					</tr>
+				<?php endforeach; endif; ?>
+			</tbody>
+		</table>
+	</div>
+	<?php
+}

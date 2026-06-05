@@ -1179,6 +1179,8 @@ function gmcq_recalculate_category_count( int $category_id ): void {
 		array( '%d' ),
 		array( '%d' )
 	);
+
+	gmcq_clear_dashboard_cache( 'category' );
 }
 
 /**
@@ -1198,6 +1200,8 @@ function gmcq_recalculate_category_counts(): void {
 		 ) q ON q.category_id = c.id
 		 SET c.question_count = q.cnt"
 	);
+
+	gmcq_clear_dashboard_cache( 'category' );
 }
 
 /**

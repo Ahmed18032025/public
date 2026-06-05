@@ -345,22 +345,22 @@ Run through this exact sequence:
 1. [✅] WP Admin → GMCQ → Questions
 2. [✅] Page loads with Active tab selected, count = 0
 3. [✅] Click **+ Add New Question**
-4. [X] Try to save with empty text → red error "Question text cannot be empty"
+4. [✅] Try to save with empty text → red error "Question text cannot be empty"
 5. [✅] Fill in all required fields with 4 answers, 1 marked correct
-6. [X] Click **Save Question** → green notice → redirected to list → new row appears
-7. [ ] Click on the question text → edit page loads with all fields pre-filled
-8. [ ] Change the question text → Save → row updates in list
-9. [ ] Click **Delete** on a row → confirm → row moves to "Inactive" tab
-10. [ ] Switch to Inactive tab → row is there with "Restore" + "Delete Permanently" actions
-11. [ ] Click **Restore** → row moves back to "Active" tab
-12. [ ] Create 3 more questions
-13. [ ] Check a few + Bulk Action = Delete → Apply → 3 rows move to Inactive
-14. [ ] Switch to **Duplicates** tab (should be 0)
-15. [ ] Try to create a question with the SAME text as an existing one → "This question already exists (duplicate detected)"
-16. [ ] Switch to **No Category** tab → should be empty (all your test questions had categories)
-17. [ ] Switch to **Unassigned** tab → should be empty (none of your questions are in quizzes yet)
+6. [✅] Click **Save Question** → green notice → redirected to list → new row appears
+7. [✅] Click on the question text → edit page loads with all fields pre-filled
+8. [✅] Change the question text → Save → row updates in list
+9. [✅] Click **Delete** on a row → confirm → row moves to "Inactive" tab
+10. [✅] Switch to Inactive tab → row is there with "Restore" + "Delete Permanently" actions
+11. [✅] Click **Restore** → row moves back to "Active" tab
+12. [✅] Create 3 more questions
+13. [✅] Check a few + Bulk Action = Delete → Apply → 3 rows move to Inactive
+14. [✅] Switch to **Duplicates** tab (should be 0)
+15. [✅] Try to create a question with the SAME text as an existing one → "This question already exists (duplicate detected)"
+16. [✅] Switch to **No Category** tab → should be empty (all your test questions had categories)
+17. [✅] Switch to **Unassigned** tab → should be empty (none of your questions are in quizzes yet)
 18. [ ] Edit a question → change Category to a new one → Save → check the old category's count decreased and the new one's increased
-19. [ ] Soft-delete a question, then click **Delete Permanently** → confirm → row gone forever
+19. [✅] Soft-delete a question, then click **Delete Permanently** → confirm → row gone forever
 20. [ ] Check `wp-content/uploads/gmcq-backups/` for a JSON file from step 19
 21. [ ] WP Admin → Categories → verify `question_count` matches reality
 22. [ ] WP Admin → Dashboard → verify the "Active Questions" stat card reflects current count

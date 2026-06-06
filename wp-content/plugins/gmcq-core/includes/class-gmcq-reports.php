@@ -160,16 +160,19 @@ function gmcq_render_reports_page(): void {
 		check_admin_referer( 'gmcq_export_attempts' );
 		$filters = array(
 			'quiz_id'     => isset( $_GET['quiz_id'] ) ? (int) $_GET['quiz_id'] : 0,
+			'user_id'     => isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : 0,
 			'category_id' => isset( $_GET['category_id'] ) ? (int) $_GET['category_id'] : 0,
 			'date_from'   => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
 			'date_to'     => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
 			'passed'      => isset( $_GET['passed'] ) ? sanitize_text_field( wp_unslash( $_GET['passed'] ) ) : '',
 		);
 		gmcq_export_attempts( $filters );
+		return;
 	}
 
 	$filters = array(
 		'quiz_id'     => isset( $_GET['quiz_id'] ) ? (int) $_GET['quiz_id'] : 0,
+		'user_id'     => isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : 0,
 		'category_id' => isset( $_GET['category_id'] ) ? (int) $_GET['category_id'] : 0,
 		'date_from'   => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
 		'date_to'     => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
@@ -180,6 +183,7 @@ function gmcq_render_reports_page(): void {
 	$list    = gmcq_get_attempts_list( $filters, $page, 20 );
 	$quizzes = gmcq_get_quizzes( array( 'per_page' => 100 ) );
 	$cats    = gmcq_get_categories( array( 'per_page' => -1 ) );
+	$users   = gmcq_get_users_with_attempts();
 	$export_url = wp_nonce_url(
 		add_query_arg(
 			array_merge( array( 'page' => 'gmcq-reports', 'export' => 'csv' ), array_filter( $filters ) ),
@@ -202,6 +206,10 @@ function gmcq_render_reports_page(): void {
 				<select name="quiz_id"><option value="0"><?php esc_html_e( 'All Quizzes', 'gmcq' ); ?></option>
 				<?php foreach ( $quizzes['quizzes'] as $q ) : ?>
 					<option value="<?php echo (int) $q->quiz_id; ?>" <?php selected( $filters['quiz_id'], (int) $q->quiz_id ); ?>><?php echo esc_html( $q->post_title ); ?></option>
+				<?php endforeach; ?></select>
+				<select name="user_id"><option value="0"><?php esc_html_e( 'All Users', 'gmcq' ); ?></option>
+				<?php foreach ( $users as $u ) : ?>
+					<option value="<?php echo (int) $u->ID; ?>" <?php selected( $filters['user_id'], (int) $u->ID ); ?>><?php echo esc_html( $u->display_name ); ?></option>
 				<?php endforeach; ?></select>
 				<select name="category_id"><option value="0"><?php esc_html_e( 'All Categories', 'gmcq' ); ?></option>
 				<?php foreach ( $cats['categories'] as $c ) : ?>
@@ -238,7 +246,29 @@ function gmcq_render_reports_page(): void {
 				<?php endforeach; endif; ?>
 				</tbody>
 			</table>
+			<?php
+			if ( $list['total'] > $list['per_page'] ) {
+				echo '<div class="tablenav" style="margin-top:10px"><div class="tablenav-pages">';
+				echo paginate_links( array(
+					'total'     => ceil( (int) $list['total'] / (int) $list['per_page'] ),
+					'current'   => $page,
+					'prev_text' => __( '&laquo;', 'gmcq' ),
+					'next_text' => __( '&raquo;', 'gmcq' ),
+				) );
+				echo '</div></div>';
+			}
+			?>
 		</div>
 	</div>
 	<?php
+}
+
+function gmcq_get_users_with_attempts(): array {
+	global $wpdb;
+	return $wpdb->get_results(
+		"SELECT DISTINCT u.ID, u.display_name FROM {$wpdb->users} u
+		 JOIN {$wpdb->prefix}gmcq_attempts a ON a.user_id = u.ID
+		 WHERE a.status = 'completed' AND a.is_active = 1
+		 ORDER BY u.display_name"
+	) ?: array();
 }

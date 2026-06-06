@@ -61,8 +61,19 @@ function gmcq_recalculate_quiz_stats(): void {
 		 zm.attempt_count = (
 		     SELECT COUNT(*) FROM {$p}gmcq_attempts a
 		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
+		 ),
+		 zm.avg_score = (
+		     SELECT COALESCE(AVG(percentage), 0) FROM {$p}gmcq_attempts a
+		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
 		 )
 		 WHERE zm.is_active = 1"
+	);
+
+	$wpdb->query(
+		"UPDATE {$p}gmcq_attempts a
+		 JOIN {$p}gmcq_quizzes_meta zm ON zm.quiz_id = a.quiz_id
+		 SET a.passed = CASE WHEN a.percentage >= zm.pass_percentage THEN 1 ELSE 0 END
+		 WHERE a.status = 'completed' AND a.passed IS NULL"
 	);
 }
 

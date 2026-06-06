@@ -657,47 +657,46 @@ function gmcq_render_quiz_questions_page( int $quiz_id ): void {
 	?>
 	<div class="wrap gmcq-dashboard-wrap">
 		<h1><?php echo esc_html( $post->post_title ); ?> — <?php esc_html_e( 'Manage Questions', 'gmcq' ); ?></h1>
-		<div class="gmcq-card">
-			<div class="gmcq-card" style="background:#f9f9f9;border:1px solid #ddd;padding:15px;margin-bottom:15px">
-				<h3 style="margin-top:0;margin-bottom:12px"><?php esc_html_e( 'Search Questions to Add', 'gmcq' ); ?></h3>
-				<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-					<input type="search" id="gmcq-q-search" placeholder="<?php esc_attr_e( 'Search by title or slug...', 'gmcq' ); ?>" style="min-width:240px;flex:1">
-					<select id="gmcq-q-category" style="min-width:160px">
-						<option value="0"><?php esc_html_e( 'All Categories', 'gmcq' ); ?></option>
-						<?php foreach ( $cat_list as $c ) : ?>
-							<option value="<?php echo (int) $c->id; ?>"><?php echo esc_html( $c->name ); ?></option>
-						<?php endforeach; ?>
-					</select>
-					<select id="gmcq-q-difficulty" style="min-width:120px">
-						<option value=""><?php esc_html_e( 'All Difficulty', 'gmcq' ); ?></option>
-						<option value="easy"><?php esc_html_e( 'Easy', 'gmcq' ); ?></option>
-						<option value="medium"><?php esc_html_e( 'Medium', 'gmcq' ); ?></option>
-						<option value="hard"><?php esc_html_e( 'Hard', 'gmcq' ); ?></option>
-					</select>
-					<select id="gmcq-q-type" style="min-width:140px">
-						<option value=""><?php esc_html_e( 'All Types', 'gmcq' ); ?></option>
-						<option value="mcq_single"><?php esc_html_e( 'MCQ Single', 'gmcq' ); ?></option>
-						<option value="mcq_multiple"><?php esc_html_e( 'MCQ Multiple', 'gmcq' ); ?></option>
-						<option value="true_false"><?php esc_html_e( 'True/False', 'gmcq' ); ?></option>
-					</select>
-					<button type="button" class="button" id="gmcq-q-search-btn"><?php esc_html_e( 'Search', 'gmcq' ); ?></button>
-					<button type="button" class="button" id="gmcq-q-search-recent"><?php esc_html_e( 'Recent Questions', 'gmcq' ); ?></button>
-					<a href="<?php echo esc_url( $base . '&action=questions&id=' . $quiz_id ); ?>" class="button"><?php esc_html_e( 'Reset Filters', 'gmcq' ); ?></a>
-				</div>
-				<div id="gmcq-search-results" style="margin-top:12px"></div>
+		<div class="gmcq-card gmcq-filter-bar">
+			<h3 style="margin-top:0;margin-bottom:12px"><?php esc_html_e( 'Search Questions to Add', 'gmcq' ); ?></h3>
+			<div class="gmcq-filter-row">
+				<input type="search" id="gmcq-q-search" placeholder="<?php esc_attr_e( 'Search by title or slug...', 'gmcq' ); ?>">
+				<select id="gmcq-q-category">
+					<option value="0"><?php esc_html_e( 'All Categories', 'gmcq' ); ?></option>
+					<?php foreach ( $cat_list as $c ) : ?>
+						<option value="<?php echo (int) $c->id; ?>"><?php echo esc_html( $c->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<select id="gmcq-q-difficulty">
+					<option value=""><?php esc_html_e( 'All Difficulty', 'gmcq' ); ?></option>
+					<option value="easy"><?php esc_html_e( 'Easy', 'gmcq' ); ?></option>
+					<option value="medium"><?php esc_html_e( 'Medium', 'gmcq' ); ?></option>
+					<option value="hard"><?php esc_html_e( 'Hard', 'gmcq' ); ?></option>
+				</select>
+				<select id="gmcq-q-type">
+					<option value=""><?php esc_html_e( 'All Types', 'gmcq' ); ?></option>
+					<option value="mcq_single"><?php esc_html_e( 'MCQ Single', 'gmcq' ); ?></option>
+					<option value="mcq_multiple"><?php esc_html_e( 'MCQ Multiple', 'gmcq' ); ?></option>
+					<option value="true_false"><?php esc_html_e( 'True/False', 'gmcq' ); ?></option>
+				</select>
+				<button type="button" class="button" id="gmcq-q-search-btn"><?php esc_html_e( 'Search', 'gmcq' ); ?></button>
+				<button type="button" class="button" id="gmcq-q-search-recent"><?php esc_html_e( 'Recent Questions', 'gmcq' ); ?></button>
+				<a href="<?php echo esc_url( $base . '&action=questions&id=' . $quiz_id ); ?>" class="button"><?php esc_html_e( 'Reset', 'gmcq' ); ?></a>
 			</div>
+			<div id="gmcq-search-results"></div>
+		</div>
 			<h3><?php esc_html_e( 'Assigned Questions', 'gmcq' ); ?> (<span id="gmcq-assigned-count"><?php echo count( $assigned ); ?></span>)</h3>
-			<ul id="gmcq-assigned-list" style="list-style:none;margin:0 0 20px;padding:0;max-height:300px;overflow-y:auto;border:1px solid #ddd;background:#fff">
+			<ul id="gmcq-assigned-list" class="gmcq-assigned-list">
 				<?php foreach ( $assigned as $q ) : ?>
-					<li data-id="<?php echo (int) $q->question_id; ?>" style="padding:10px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-						<span style="flex:1;margin-right:10px"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $q->question_text ), 15 ) ); ?></span>
-						<button type="button" class="button-link gmcq-remove-q" data-id="<?php echo (int) $q->question_id; ?>" style="color:#dc3232"><?php esc_html_e( 'Remove', 'gmcq' ); ?></button>
+					<li data-id="<?php echo (int) $q->question_id; ?>">
+						<span class="gmcq-assigned-text"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $q->question_text ), 15 ) ); ?></span>
+						<button type="button" class="button-link gmcq-remove-q"><?php esc_html_e( 'Remove', 'gmcq' ); ?></button>
 					</li>
 				<?php endforeach; ?>
 			</ul>
-			<p style="margin-top:15px">
+			<p class="gmcq-action-bar">
 				<button type="button" class="button button-primary button-large" id="gmcq-save-questions"><?php esc_html_e( 'Save Question Order', 'gmcq' ); ?></button>
-				<a href="<?php echo esc_url( $base ); ?>" class="button button-large" style="margin-left:10px"><?php esc_html_e( 'Back to Quizzes', 'gmcq' ); ?></a>
+				<a href="<?php echo esc_url( $base ); ?>" class="button button-large"><?php esc_html_e( 'Back to Quizzes', 'gmcq' ); ?></a>
 			</p>
 		</div>
 	</div>

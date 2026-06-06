@@ -282,7 +282,27 @@ JS
 }
 add_action( 'admin_init', 'gmcq_create_frontend_assets' );
 
+function gmcq_check_quiz_availability(): void {
+	if ( is_singular( 'gmcq_quiz' ) ) {
+		$quiz_id = get_the_ID();
+		$meta = gmcq_get_quiz_meta( $quiz_id );
+		global $wp_query;
+		if ( ! $meta || 1 !== (int) $meta->is_active || 'published' !== $meta->status ) {
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+		}
+	}
+}
+add_action( 'template_redirect', 'gmcq_check_quiz_availability' );
+
 function gmcq_render_single_quiz_template( $content ): string {
+	global $wp_query;
+	// If 404 was triggered by our availability check, return original content
+	// (WordPress will handle the 404 template rendering)
+	if ( $wp_query->is_404 ) {
+		return $content;
+	}
 	if ( ! is_singular( 'gmcq_quiz' ) ) {
 		return $content;
 	}
@@ -291,12 +311,6 @@ function gmcq_render_single_quiz_template( $content ): string {
 	}
 	$quiz_id = get_the_ID();
 	$meta = gmcq_get_quiz_meta( $quiz_id );
-	if ( ! $meta || 1 !== (int) $meta->is_active || 'published' !== $meta->status ) {
-		global $wp_query;
-		$wp_query->set_404();
-		status_header( 404 );
-		return $content;
-	}
 	if ( (int) $meta->require_login && ! is_user_logged_in() ) {
 		return '<p>' . esc_html__( 'Please log in to take this quiz.', 'gmcq' ) . '</p>';
 	}

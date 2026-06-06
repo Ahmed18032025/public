@@ -16,22 +16,55 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 
 function gmcq_get_default_settings(): array {
 	return array(
-		'activity_retention_days'     => 90,
-		'attempt_retention_days'      => 365,
-		'enable_auto_purge'           => 0,
+		// Default Quiz Settings
+		'default_marks'               => 1.00,
+		'default_negative_marks'      => 0.25,
+		'default_time_limit'          => 30,
+		'default_pass_percentage'       => 40,
+		'default_questions_per_page'  => 20,
+		'max_questions_per_quiz'      => 200,
+		'default_shuffle_questions'   => 1,
+		'default_shuffle_answers'     => 1,
+		'default_show_explanations'   => 1,
+		'default_show_correct_answers' => 1,
+		'default_require_login'       => 0,
+
+		// Frontend Settings
+		'quiz_slug'                   => 'quiz',
+		'results_display'             => 'immediately',
+		'allow_guest_attempts'        => 1,
+		'show_timer'                  => 1,
+		'show_navigation'             => 1,
+		'allow_answer_change'         => 0,
+		'max_attempts_per_ip_per_day' => 50,
+
+		// Import Settings
+		'max_csv_size_mb'             => 5,
+		'max_import_rows'             => 10000,
+		'import_batch_size'           => 50,
+
+		// Search Settings
+		'search_min_query_length'     => 3,
+		'search_cache_ttl'            => 300,
+		'search_max_per_page'         => 100,
+
+		// Cache Settings
 		'dashboard_cache_ttl'         => 300,
 		'health_cache_ttl'            => 600,
 		'integrity_cache_ttl'         => 900,
 		'reports_cache_ttl'           => 300,
-		'max_questions_per_quiz'      => 200,
-		'max_attempts_per_ip_per_day' => 50,
-		'search_min_query_length'     => 3,
-		'search_cache_ttl'            => 300,
-		'search_max_per_page'         => 100,
+
+		// Backup Settings
 		'backup_enabled'              => 1,
 		'backup_retention_days'       => 90,
 		'max_backup_files'            => 50,
-		'quiz_slug'                   => 'quiz',
+
+		// Data Retention
+		'activity_retention_days'     => 90,
+		'attempt_retention_days'      => 365,
+		'enable_auto_purge'           => 0,
+
+		// Data Management
 		'uninstall_behavior'          => 'keep',
 		'enable_question_tags'        => 0,
 	);
@@ -283,4 +316,27 @@ function gmcq_validate_question_category( int $category_id ): bool|\WP_Error {
 	}
 
 	return true;
+}
+
+function gmcq_export_all_data(): void {
+	global $wpdb;
+	$p = $wpdb->prefix;
+
+	$data = array(
+		'export_date'     => current_time( 'mysql' ),
+		'categories'      => $wpdb->get_results( "SELECT * FROM {$p}gmcq_categories" ),
+		'questions'       => $wpdb->get_results( "SELECT * FROM {$p}gmcq_questions" ),
+		'answers'         => $wpdb->get_results( "SELECT * FROM {$p}gmcq_answers" ),
+		'quizzes_meta'    => $wpdb->get_results( "SELECT * FROM {$p}gmcq_quizzes_meta" ),
+		'question_map'    => $wpdb->get_results( "SELECT * FROM {$p}gmcq_question_map" ),
+		'attempts'        => $wpdb->get_results( "SELECT * FROM {$p}gmcq_attempts" ),
+		'attempt_answers' => $wpdb->get_results( "SELECT * FROM {$p}gmcq_attempt_answers" ),
+		'imports'         => $wpdb->get_results( "SELECT * FROM {$p}gmcq_imports" ),
+		'settings'        => get_option( 'gmcq_settings' ),
+	);
+
+	header( 'Content-Type: application/json' );
+	header( 'Content-Disposition: attachment; filename=gmcq-export-' . date( 'Y-m-d' ) . '.json' );
+	echo wp_json_encode( $data, JSON_PRETTY_PRINT );
+	exit;
 }

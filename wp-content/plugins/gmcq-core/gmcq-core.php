@@ -5,6 +5,8 @@
  * Version:     1.0.0
  * Author:      GMCQ Team
  * Text Domain: gmcq
+ *
+ * Created @SparkzDev (+91 7530966985)
  */
 
 defined( 'ABSPATH' ) || exit;

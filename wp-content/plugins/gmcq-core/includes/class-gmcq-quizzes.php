@@ -20,7 +20,7 @@ function gmcq_register_quiz_cpt(): void {
 			'show_in_menu'        => false,
 			'rewrite'             => array( 'slug' => $slug ),
 			'capability_type'     => 'post',
-			'has_archive'         => false,
+			'has_archive'         => true,
 			'supports'            => array( 'title', 'editor', 'author' ),
 		)
 	);

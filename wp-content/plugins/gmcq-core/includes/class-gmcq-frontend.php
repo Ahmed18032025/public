@@ -2,7 +2,7 @@
 /**
  * GMCQ Frontend — shortcode + public quiz taking UI.
  *
- * Created @SparkzDev (+91 7530966985)
+ * Created @SparkzDev
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -163,7 +163,7 @@ function gmcq_shortcode_quiz_archive( $atts ): string {
 			<?php else : foreach ( $quizzes as $quiz ) : ?>
 				<div class="gmcq-quiz-card">
 					<h3 class="gmcq-quiz-card-title">
-						<a href="<?php echo esc_url( home_url( get_post_field( 'post_name', $quiz->quiz_id ) ) ); ?>">
+						<a href="<?php echo esc_url( get_permalink( $quiz->quiz_id ) ); ?>">
 							<?php echo esc_html( $quiz->post_title ); ?>
 						</a>
 					</h3>
@@ -282,11 +282,10 @@ JS
 }
 add_action( 'admin_init', 'gmcq_create_frontend_assets' );
 
-function gmcq_render_single_quiz_template(): void {
+function gmcq_render_single_quiz_template( $content ): string {
 	if ( ! is_singular( 'gmcq_quiz' ) ) {
-		return;
+		return $content;
 	}
-	// Prevent caching of quiz pages (dynamic content)
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
 		define( 'DONOTCACHEPAGE', true );
 	}
@@ -296,12 +295,11 @@ function gmcq_render_single_quiz_template(): void {
 		global $wp_query;
 		$wp_query->set_404();
 		status_header( 404 );
-		return;
+		return $content;
 	}
 	if ( (int) $meta->require_login && ! is_user_logged_in() ) {
-		echo '<p>' . esc_html__( 'Please log in to take this quiz.', 'gmcq' ) . '</p>';
-		return;
+		return '<p>' . esc_html__( 'Please log in to take this quiz.', 'gmcq' ) . '</p>';
 	}
-	echo gmcq_shortcode_quiz( array( 'id' => $quiz_id ) );
+	return gmcq_shortcode_quiz( array( 'id' => $quiz_id ) );
 }
-add_action( 'the_content', 'gmcq_render_single_quiz_template' );
+add_filter( 'the_content', 'gmcq_render_single_quiz_template' );

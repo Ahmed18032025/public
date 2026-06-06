@@ -3,10 +3,10 @@
  * Plugin Name: GMCQ Quiz Engine
  * Description: MCQ Quiz Management System for WordPress.
  * Version:     1.0.0
- * Author:      GMCQ Team
+ * Author:      Mr A
  * Text Domain: gmcq
  *
- * Created @SparkzDev (+91 7530966985)
+ * Created @SparkzDev
  */
 
 defined( 'ABSPATH' ) || exit;

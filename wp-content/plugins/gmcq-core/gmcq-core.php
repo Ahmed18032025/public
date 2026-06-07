@@ -24,9 +24,9 @@ if ( ! defined( 'GMCQ_PLUGIN_URL' ) ) {
 	define( 'GMCQ_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 
-// License endpoint - update after Netlify deployment
+// License endpoint - update after Vercel deployment
 if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
-	define( 'GMCQ_LICENSE_ENDPOINT', 'https://gmcq-license.netlify.app/.netlify/functions/validate-license' );
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
 }
 
 $gmcq_core_files = array(

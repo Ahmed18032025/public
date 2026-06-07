@@ -1,29 +1,41 @@
 # GMCQ License Key Protection Setup
 
-## Netlify Setup Checklist
+## Vercel Deployment Checklist
 
-Use this checklist to complete the license management setup on Netlify.
+### 1. Prepare Files
+The following files are ready for Vercel:
+- `api/validate-license.js` — Vercel Serverless Function (Node.js)
+- `vercel.json` — Vercel project configuration
+- `package.json` — declares `jsonwebtoken` dependency
 
-### Account & Site
-- [ ] Log in to [Netlify](https://app.netlify.com/)
-- [ ] Create a new site (or use an existing one)
-- [ ] Note your site URL (e.g. `https://gmcq-license.netlify.app`)
+### 2. Deploy to Vercel
+**Option A: Vercel CLI (recommended)**
+```powershell
+npm install -g vercel
+vercel login
+vercel
+```
+Follow the prompts. When asked for project settings, confirm the defaults.
 
-### Deploy Site
-- [ ] Connect this folder (`app/public`) to your Netlify site
-- [ ] Trigger a deploy (Netlify will run `npm init -y && npm install jsonwebtoken` via `netlify.toml`)
-- [ ] Verify the deploy succeeds and the site is live
+**Option B: Vercel Dashboard**
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import your repository (or drag-and-drop the `app/public` folder)
+3. Framework preset: **Other**
+4. Build command: leave empty (static site, no build step)
+5. Publish directory: `.` (root)
+6. Click **Deploy**
 
-### Environment Variables
-Go to **Site Settings → Build & Deploy → Environment**:
+### 3. Configure Environment Variables
+In Vercel Dashboard → Your Project → Settings → Environment Variables:
 
-- [ ] Add `JWT_SECRET` — paste a random secret string (save this securely)
-- [ ] Add `VALID_LICENSES` — paste comma-separated SHA256 hashes (see keys below)
-- [ ] Trigger a **re-deploy** after adding env vars (they are only available at build/runtime)
+| Name | Value |
+|------|-------|
+| `JWT_SECRET` | A random secret string (save this securely) |
+| `VALID_LICENSES` | Comma-separated SHA256 hashes of valid license keys |
 
-### License Keys
-Use the sample keys below or generate your own:
+After adding env vars, **re-deploy** the project so they take effect.
 
+### 4. Generate License Keys
 ```powershell
 # Generate a single key + hash
 $key = -join ((65..90) + (48..57) | Get-Random -Count 19 | % {[char]$_}) -replace '(.{4})','$1-'; $key = $key.Trim('-')
@@ -41,7 +53,7 @@ Write-Host "Hash: $hash"
 }
 ```
 
-### Sample License Keys (Ready to Use)
+### 5. Sample License Keys (Ready to Use)
 
 | License Key | SHA256 Hash |
 |-------------|-----------|
@@ -56,22 +68,25 @@ Write-Host "Hash: $hash"
 08B85163FD69CCF008F5CC3236E1723F67E6EFCE1039637EA49602626FDB328F,2C9FDD2DCBB1C756C9DB1AF29A3489A9D203274FB2C1F0EC88BCF9B5A68C0290,...
 ```
 
-### Update WordPress Plugin
-- [ ] Open `wp-content/plugins/gmcq-core/gmcq-core.php` line 29
-- [ ] Replace `https://gmcq-license.netlify.app` with your actual Netlify site URL:
-  ```php
-  define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-SITE.netlify.app/.netlify/functions/validate-license' );
-  ```
+### 6. Update WordPress Plugin
+After deploying to Vercel, you'll get a URL like `https://gmcq-license.vercel.app`.
 
-### Verify Setup
-- [ ] Visit your Netlify site URL directly — you should see a 405 "Method not allowed" JSON response (the function only accepts POST)
+Open `wp-content/plugins/gmcq-core/gmcq-core.php` line 29 and update:
+```php
+define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
+```
+
+Also update `wp-content/plugins/gmcq-core/includes/class-gmcq-license.php` line 9 with the same URL.
+
+### 7. Verify Setup
+- [ ] Visit your Vercel function URL directly: `https://YOUR-PROJECT.vercel.app/api/validate-license` — should return a 405 JSON response (only accepts POST)
 - [ ] In WordPress admin, go to **GMCQ → License** and try activating with one of the sample keys
 - [ ] Confirm the license status shows "Activated"
 
 ## How It Works
 
 1. User enters license key in GMCQ → License admin page
-2. Plugin sends key + domain to Netlify function
+2. Plugin sends key + domain to Vercel function
 3. Server validates hash and returns signed JWT token
 4. Token stored locally (valid 30 days)
 5. All plugin features check token before working
@@ -79,7 +94,7 @@ Write-Host "Hash: $hash"
 
 ## Files Changed in Plugin
 
-- `includes/class-gmcq-license.php` - License validation logic
-- `gmcq-core.php` - Early license check redirects to activation page
-- `includes/class-gmcq-admin.php` - License menu
-- `includes/class-gmcq-frontend.php` - License checks on shortcodes
+- `includes/class-gmcq-license.php` — License validation logic + endpoint URL
+- `gmcq-core.php` — Endpoint constant + early license check redirect
+- `includes/class-gmcq-admin.php` — License menu + AJAX handlers
+- `includes/class-gmcq-frontend.php` — Shortcodes + REST route protection

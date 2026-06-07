@@ -4,9 +4,9 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-// Endpoint URL - update after Netlify deployment
+// Endpoint URL - update after Vercel deployment
 if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
-	define( 'GMCQ_LICENSE_ENDPOINT', 'https://gmcq-license.netlify.app/.netlify/functions/validate-license' );
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
 }
 
 function gmcq_license_is_activated(): bool {

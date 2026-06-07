@@ -123,7 +123,7 @@ function gmcq_check_license_activation(): void {
 	
 	// Allow access to license activation page
 	$screen = get_current_screen();
-	if ( $screen && 'gmcq-license' === $screen->id ) {
+	if ( $screen && 'toplevel_page_gmcq-license' === $screen->id ) {
 		return;
 	}
 	

@@ -229,3 +229,16 @@
 [06-Jun-2026 21:40:46 UTC] PHP Parse error:  Unmatched '}' in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-content\plugins\gmcq-core\includes\class-gmcq-license.php on line 108
 [06-Jun-2026 21:42:32 UTC] PHP Parse error:  Unmatched '}' in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-content\plugins\gmcq-core\includes\class-gmcq-license.php on line 108
 [06-Jun-2026 21:43:32 UTC] PHP Parse error:  Unmatched '}' in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-content\plugins\gmcq-core\includes\class-gmcq-license.php on line 108
+[07-Jun-2026 20:28:27 UTC] WordPress database error Unknown column 'zm.avg_score' in 'field list' for query UPDATE wp_gmcq_quizzes_meta zm
+		 SET zm.question_count = (
+		     SELECT COUNT(*) FROM wp_gmcq_question_map qm WHERE qm.quiz_id = zm.quiz_id
+		 ),
+		 zm.attempt_count = (
+		     SELECT COUNT(*) FROM wp_gmcq_attempts a
+		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
+		 ),
+		 zm.avg_score = (
+		     SELECT COALESCE(AVG(percentage), 0) FROM wp_gmcq_attempts a
+		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
+		 )
+		 WHERE zm.is_active = 1 made by do_action_ref_array('gmcq_daily_cron'), WP_Hook->do_action, WP_Hook->apply_filters, gmcq_run_daily_cron, gmcq_recalculate_quiz_stats

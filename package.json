@@ -1,0 +1,8 @@
+{
+  "name": "gmcq-license-server",
+  "version": "1.0.0",
+  "description": "License validation endpoint for GMCQ Quiz Engine plugin",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  }
+}

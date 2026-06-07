@@ -1,0 +1,11 @@
+[build]
+  command = "npm init -y && npm install jsonwebtoken"
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/validate-license"
+  to = "/.netlify/functions/validate-license"
+  status = 200

@@ -24,7 +24,13 @@ if ( ! defined( 'GMCQ_PLUGIN_URL' ) ) {
 	define( 'GMCQ_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 
+// License endpoint - update after Netlify deployment
+if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://gmcq-license.netlify.app/.netlify/functions/validate-license' );
+}
+
 $gmcq_core_files = array(
+	'includes/class-gmcq-license.php',
 	'includes/class-gmcq-helpers.php',
 	'includes/class-gmcq-db.php',
 	'includes/class-gmcq-cron.php',
@@ -107,3 +113,31 @@ add_action(
 	},
 	5
 );
+
+// Early license check - redirect to activation page if not activated
+add_action( 'admin_init', 'gmcq_check_license_activation' );
+function gmcq_check_license_activation(): void {
+	if ( ! is_admin() ) {
+		return;
+	}
+	
+	// Allow access to license activation page
+	$screen = get_current_screen();
+	if ( $screen && 'gmcq-license' === $screen->id ) {
+		return;
+	}
+	
+	// Skip for AJAX requests that are license-related
+	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		return;
+	}
+	
+	// Check if license is activated (skip first 5 seconds for activation flow)
+	if ( ! gmcq_license_is_activated() ) {
+		// Don't redirect during activation to avoid loop
+		if ( ! doing_action( 'activate_plugin' ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=gmcq-license' ) );
+			exit;
+		}
+	}
+}

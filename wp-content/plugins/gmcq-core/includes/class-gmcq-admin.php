@@ -6,22 +6,28 @@
 defined( 'ABSPATH' ) || exit;
 
 function gmcq_register_admin_menus(): void {
-	add_menu_page(__( 'GMCQ Dashboard', 'gmcq' ),__( 'GMCQ', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page','dashicons-analytics',30);
-	add_submenu_page('gmcq-dashboard',__( 'GMCQ Dashboard', 'gmcq' ),__( 'Dashboard', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page');
-	add_submenu_page('gmcq-dashboard',__( 'Categories', 'gmcq' ),__( 'Categories', 'gmcq' ),'manage_gmcq','gmcq-categories','gmcq_render_categories_page');
-add_submenu_page('gmcq-dashboard',__( 'Questions', 'gmcq' ),__( 'Questions', 'gmcq' ),'manage_gmcq','gmcq-questions','gmcq_render_questions_page');
-	add_submenu_page('gmcq-dashboard',__( 'Quizzes', 'gmcq' ),__( 'Quizzes', 'gmcq' ),'manage_gmcq','gmcq-quizzes','gmcq_render_quizzes_page');
-	add_submenu_page('gmcq-dashboard',__( 'CSV Import', 'gmcq' ),__( 'CSV Import', 'gmcq' ),'manage_gmcq','gmcq-import','gmcq_render_import_page');
-	add_submenu_page('gmcq-dashboard',__( 'Reports', 'gmcq' ),__( 'Reports', 'gmcq' ),'manage_gmcq','gmcq-reports','gmcq_render_reports_page');
-	add_submenu_page('gmcq-dashboard',__( 'Settings', 'gmcq' ),__( 'Settings', 'gmcq' ),'manage_gmcq','gmcq-settings','gmcq_render_settings_page');
+	add_menu_page(__( 'GMCQ Dashboard', 'gmcq' ),__( 'GMCQ', 'gmcq' ),'manage_options','gmcq-license','gmcq_render_license_page','dashicons-lock',30);
+	add_submenu_page('gmcq-license',__( 'License', 'gmcq' ),__( 'License', 'gmcq' ),'manage_options','gmcq-license','gmcq_render_license_page');
+	add_submenu_page('gmcq-license',__( 'GMCQ Dashboard', 'gmcq' ),__( 'Dashboard', 'gmcq' ),'manage_gmcq','gmcq-dashboard','gmcq_render_dashboard_page');
+	add_submenu_page('gmcq-license',__( 'Categories', 'gmcq' ),__( 'Categories', 'gmcq' ),'manage_gmcq','gmcq-categories','gmcq_render_categories_page');
+	add_submenu_page('gmcq-license',__( 'Questions', 'gmcq' ),__( 'Questions', 'gmcq' ),'manage_gmcq','gmcq-questions','gmcq_render_questions_page');
+	add_submenu_page('gmcq-license',__( 'Quizzes', 'gmcq' ),__( 'Quizzes', 'gmcq' ),'manage_gmcq','gmcq-quizzes','gmcq_render_quizzes_page');
+	add_submenu_page('gmcq-license',__( 'CSV Import', 'gmcq' ),__( 'CSV Import', 'gmcq' ),'manage_gmcq','gmcq-import','gmcq_render_import_page');
+	add_submenu_page('gmcq-license',__( 'Reports', 'gmcq' ),__( 'Reports', 'gmcq' ),'manage_gmcq','gmcq-reports','gmcq_render_reports_page');
+	add_submenu_page('gmcq-license',__( 'Settings', 'gmcq' ),__( 'Settings', 'gmcq' ),'manage_gmcq','gmcq-settings','gmcq_render_settings_page');
 }
 add_action('admin_menu','gmcq_register_admin_menus');
 
 function gmcq_admin_enqueue_scripts(string $hook):void{
-	if(strpos($hook,'gmcq-')===false&&$hook!=='toplevel_page_gmcq-dashboard')return;
+	if(strpos($hook,'gmcq-')===false&&$hook!=='toplevel_page_gmcq-license')return;
 	$u=wp_upload_dir();$c=$u['baseurl'].'/gmcq-assets/css/admin.css';
 	wp_enqueue_style('gmcq-admin',$c,array(),GMCQ_VERSION);
-	wp_localize_script('jquery','gmcqAdmin',array('ajaxUrl'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('gmcq_category_nonce'),'version'=>GMCQ_VERSION));
+	wp_localize_script('jquery','gmcqAdmin',array(
+		'ajaxUrl'=>admin_url('admin-ajax.php'),
+		'nonce'=>wp_create_nonce('gmcq_category_nonce'),
+		'licenseNonce'=>wp_create_nonce('gmcq_license_nonce'),
+		'version'=>GMCQ_VERSION
+	));
 
 	// Thickbox for import page (format help modal + import details)
 	if (false !== strpos($hook, 'gmcq-import')) {

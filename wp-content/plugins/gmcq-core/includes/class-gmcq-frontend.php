@@ -34,6 +34,10 @@ function gmcq_enqueue_frontend_assets(): void {
 add_action( 'wp_enqueue_scripts', 'gmcq_enqueue_frontend_assets' );
 
 function gmcq_shortcode_quiz( $atts ): string {
+	if ( ! gmcq_license_is_activated() ) {
+		return '<p>' . esc_html__( 'Quiz not available - plugin license not activated.', 'gmcq' ) . '</p>';
+	}
+	
 	$atts = shortcode_atts(
 		array(
 			'id' => 0,
@@ -117,6 +121,10 @@ function gmcq_shortcode_quiz( $atts ): string {
 }
 
 function gmcq_shortcode_quiz_archive( $atts ): string {
+	if ( ! gmcq_license_is_activated() ) {
+		return '<p>' . esc_html__( 'Quizzes not available - plugin license not activated.', 'gmcq' ) . '</p>';
+	}
+	
 	$atts = shortcode_atts(
 		array(
 			'title' => __( 'All Quizzes', 'gmcq' ),
@@ -200,13 +208,17 @@ function gmcq_register_rest_routes(): void {
 		array(
 			'methods'             => 'GET',
 			'callback'            => 'gmcq_rest_get_quiz',
-			'permission_callback' => '__return_true',
+			'permission_callback' => 'gmcq_license_is_activated',
 		)
 	);
 }
 add_action( 'rest_api_init', 'gmcq_register_rest_routes' );
 
 function gmcq_rest_get_quiz( WP_REST_Request $request ) {
+	if ( ! gmcq_license_is_activated() ) {
+		return new WP_Error( 'license_required', __( 'Plugin license not activated.', 'gmcq' ), array( 'status' => 403 ) );
+	}
+	
 	$quiz_id = (int) $request['id'];
 	$post    = get_post( $quiz_id );
 	$meta    = gmcq_get_quiz_meta( $quiz_id );

@@ -1,23 +1,39 @@
 # GMCQ License Key Protection Setup
 
-## Quick Start
+## Netlify Setup Checklist
 
-### 1. Deploy Netlify Function
-The license validation endpoint is ready in `netlify/functions/validate-license.js`.
+Use this checklist to complete the license management setup on Netlify.
 
-### 2. Generate License Keys
+### Account & Site
+- [ ] Log in to [Netlify](https://app.netlify.com/)
+- [ ] Create a new site (or use an existing one)
+- [ ] Note your site URL (e.g. `https://gmcq-license.netlify.app`)
+
+### Deploy Site
+- [ ] Connect this folder (`app/public`) to your Netlify site
+- [ ] Trigger a deploy (Netlify will run `npm init -y && npm install jsonwebtoken` via `netlify.toml`)
+- [ ] Verify the deploy succeeds and the site is live
+
+### Environment Variables
+Go to **Site Settings → Build & Deploy → Environment**:
+
+- [ ] Add `JWT_SECRET` — paste a random secret string (save this securely)
+- [ ] Add `VALID_LICENSES` — paste comma-separated SHA256 hashes (see keys below)
+- [ ] Trigger a **re-deploy** after adding env vars (they are only available at build/runtime)
+
+### License Keys
+Use the sample keys below or generate your own:
+
 ```powershell
-# Generate a license key (format: XXXX-XXXX-XXXX-XXXX)
-$key = -join ((65..90) + (48..57) | Get-Random -Count 19 | % {[char]$_}) -replace '(.{4})','$1-'
-$key = $key.Trim('-')
-# Get hash for server (add this hash to VALID_LICENSES in Netlify)
+# Generate a single key + hash
+$key = -join ((65..90) + (48..57) | Get-Random -Count 19 | % {[char]$_}) -replace '(.{4})','$1-'; $key = $key.Trim('-')
 $hash = (Get-FileHash -Algorithm SHA256 -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($key)))).Hash
 Write-Host "Key: $key"
 Write-Host "Hash: $hash"
 ```
 
-**Quick: Generate 10 keys at once:**
 ```powershell
+# Generate 10 keys at once
 1..10 | ForEach-Object {
     $key = -join ((65..90) + (48..57) | Get-Random -Count 19 | % {[char]$_}) -replace '(.{4})','$1-'; $key = $key.Trim('-')
     $hash = (Get-FileHash -Algorithm SHA256 -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($key)))).Hash
@@ -25,7 +41,8 @@ Write-Host "Hash: $hash"
 }
 ```
 
-## Sample License Keys (Ready to Use)
+### Sample License Keys (Ready to Use)
+
 | License Key | SHA256 Hash |
 |-------------|-----------|
 | M4GH-6XQ9-5SR2-ECAZ-FNY | 08B85163FD69CCF008F5CC3236E1723F67E6EFCE1039637EA49602626FDB328F |
@@ -34,31 +51,22 @@ Write-Host "Hash: $hash"
 | EIK0-UQ3L-4HG8-CXJO-5BW | A81AB96D0E80983E75727A8A1ABABC3E1285182F665D6F6567B280DB41531624 |
 | 90FW-IJNM-QOT2-1KL3-654 | 6DC909D5315180D7D0495ED67495DD08D858E11A506E2E25E8A69A8E7A88576C |
 
-**Use Format in VALID_LICENSES:**
+**Format for `VALID_LICENSES` env var:**
 ```
 08B85163FD69CCF008F5CC3236E1723F67E6EFCE1039637EA49602626FDB328F,2C9FDD2DCBB1C756C9DB1AF29A3489A9D203274FB2C1F0EC88BCF9B5A68C0290,...
 ```
 
-### 3. Configure Netlify Environment Variables
-In Netlify Dashboard → Site Settings → Build & Deploy → Environment:
+### Update WordPress Plugin
+- [ ] Open `wp-content/plugins/gmcq-core/gmcq-core.php` line 29
+- [ ] Replace `https://gmcq-license.netlify.app` with your actual Netlify site URL:
+  ```php
+  define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-SITE.netlify.app/.netlify/functions/validate-license' );
+  ```
 
-| Name | Value |
-|------|-------|
-| `JWT_SECRET` | Random secret (save this for future use!) |
-| `VALID_LICENSES` | Comma-separated SHA256 hashes |
-
-### 4. Update Plugin Endpoint
-Edit `wp-content/plugins/gmcq-core/gmcq-core.php` line 29:
-```php
-define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-SITE.netlify.app/.netlify/functions/validate-license' );
-```
-
-## Files Changed in Plugin
-
-- `includes/class-gmcq-license.php` - License validation logic
-- `gmcq-core.php` - Early license check redirects to activation page
-- `includes/class-gmcq-admin.php` - License menu
-- `includes/class-gmcq-frontend.php` - License checks on shortcodes
+### Verify Setup
+- [ ] Visit your Netlify site URL directly — you should see a 405 "Method not allowed" JSON response (the function only accepts POST)
+- [ ] In WordPress admin, go to **GMCQ → License** and try activating with one of the sample keys
+- [ ] Confirm the license status shows "Activated"
 
 ## How It Works
 
@@ -68,3 +76,10 @@ define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-SITE.netlify.app/.netlify/functio
 4. Token stored locally (valid 30 days)
 5. All plugin features check token before working
 6. Expired tokens prompt re-validation
+
+## Files Changed in Plugin
+
+- `includes/class-gmcq-license.php` - License validation logic
+- `gmcq-core.php` - Early license check redirects to activation page
+- `includes/class-gmcq-admin.php` - License menu
+- `includes/class-gmcq-frontend.php` - License checks on shortcodes

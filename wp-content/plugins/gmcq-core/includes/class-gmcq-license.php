@@ -17,8 +17,8 @@ function gmcq_license_is_activated(): bool {
 		return false;
 	}
 	
-	// Check if token is expired (30 days)
-	$expires_at = $activated_at + ( 30 * DAY_IN_SECONDS );
+	// Check if token is expired (365 days = 1 year)
+	$expires_at = $activated_at + ( 365 * DAY_IN_SECONDS );
 	if ( time() > $expires_at ) {
 		return false;
 	}
@@ -78,7 +78,7 @@ function gmcq_license_deactivate(): void {
 	delete_option( 'gmcq_license_activated_at' );
 }
 
-function gmcq_license_render_page(): void {
+function gmcq_render_license_page(): void {
 	if ( gmcq_license_is_activated() ) {
 		$key_masked = gmcq_license_get_stored_key();
 		if ( strlen( $key_masked ) > 8 ) {

@@ -242,3 +242,204 @@
 		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
 		 )
 		 WHERE zm.is_active = 1 made by do_action_ref_array('gmcq_daily_cron'), WP_Hook->do_action, WP_Hook->apply_filters, gmcq_run_daily_cron, gmcq_recalculate_quiz_stats
+[07-Jun-2026 20:35:26 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:38 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:41 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:43 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:44 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:47 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:52 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:55 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:35:57 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:00 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:01 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:02 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:20 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:22 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:24 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:25 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:26 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:27 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:29 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:36:56 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:39:35 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:39:48 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:39:49 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:39:50 UTC] PHP Fatal error:  Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, function "gmcq_render_license_page" not found or invalid function name in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php:341
+Stack trace:
+#0 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php(365): WP_Hook->apply_filters('', Array)
+#1 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\plugin.php(522): WP_Hook->do_action(Array)
+#2 C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-admin\admin.php(264): do_action('toplevel_page_g...')
+#3 {main}
+  thrown in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\class-wp-hook.php on line 341
+[07-Jun-2026 20:45:28 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:28 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:30 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:30 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:30 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:32 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:34 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:34 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:36 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:45:36 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:44 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:44 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:46 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:46 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:47 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:50 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:50 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:54 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:54 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:52:54 UTC] PHP Notice:  Function wpdb::prepare was called <strong>incorrectly</strong>. The query argument of wpdb::prepare() must have a placeholder. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 3.9.0.) in C:\Users\leonm\Local Sites\quizmanagementwebsite\app\public\wp-includes\functions.php on line 6170
+[07-Jun-2026 20:56:44 UTC] WordPress database error Unknown column 'zm.avg_score' in 'field list' for query UPDATE wp_gmcq_quizzes_meta zm
+		 SET zm.question_count = (
+		     SELECT COUNT(*) FROM wp_gmcq_question_map qm WHERE qm.quiz_id = zm.quiz_id
+		 ),
+		 zm.attempt_count = (
+		     SELECT COUNT(*) FROM wp_gmcq_attempts a
+		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
+		 ),
+		 zm.avg_score = (
+		     SELECT COALESCE(AVG(percentage), 0) FROM wp_gmcq_attempts a
+		     WHERE a.quiz_id = zm.quiz_id AND a.status = 'completed' AND a.is_active = 1
+		 )
+		 WHERE zm.is_active = 1 made by do_action_ref_array('gmcq_daily_cron'), WP_Hook->do_action, WP_Hook->apply_filters, gmcq_run_daily_cron, gmcq_recalculate_quiz_stats

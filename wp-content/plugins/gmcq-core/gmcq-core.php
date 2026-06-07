@@ -114,27 +114,26 @@ add_action(
 	5
 );
 
-// Early license check - redirect to activation page if not activated
+// License check - redirect GMCQ plugin pages (not WordPress admin) to activation if not activated
 add_action( 'admin_init', 'gmcq_check_license_activation' );
 function gmcq_check_license_activation(): void {
 	if ( ! is_admin() ) {
 		return;
 	}
 	
-	// Allow access to license activation page
-	$screen = get_current_screen();
-	if ( $screen && 'toplevel_page_gmcq-license' === $screen->id ) {
-		return;
-	}
-	
-	// Skip for AJAX requests that are license-related
+	// Skip for AJAX requests
 	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 		return;
 	}
 	
-	// Check if license is activated (skip first 5 seconds for activation flow)
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	
+	// Only restrict GMCQ plugin pages (not WordPress admin, not the license page itself)
+	if ( empty( $page ) || ! str_starts_with( $page, 'gmcq-' ) || 'gmcq-license' === $page ) {
+		return;
+	}
+	
 	if ( ! gmcq_license_is_activated() ) {
-		// Don't redirect during activation to avoid loop
 		if ( ! doing_action( 'activate_plugin' ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=gmcq-license' ) );
 			exit;

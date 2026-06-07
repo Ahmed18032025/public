@@ -51,13 +51,13 @@ module.exports = function handler(req, res) {
         iat: Math.floor(Date.now() / 1000)
       },
       jwtSecret,
-      { expiresIn: '30d' }
+      { expiresIn: '365d' }
     );
 
     res.status(200).json({
       valid: true,
       token,
-      expires_in: 2592000
+      expires_in: 31536000
     });
   } catch (error) {
     console.error('License validation error:', error);

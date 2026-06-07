@@ -88,9 +88,9 @@ Also update `wp-content/plugins/gmcq-core/includes/class-gmcq-license.php` line 
 1. User enters license key in GMCQ → License admin page
 2. Plugin sends key + domain to Vercel function
 3. Server validates hash and returns signed JWT token
-4. Token stored locally (valid 30 days)
+4. Token stored locally (valid 365 days / 1 year)
 5. All plugin features check token before working
-6. Expired tokens prompt re-validation
+6. Expired tokens prompt re-validation (after 365 days)
 
 ## Files Changed in Plugin
 

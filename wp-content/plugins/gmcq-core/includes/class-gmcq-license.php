@@ -1,12 +1,12 @@
 <?php
 /**
- * GMCQ License System - Remote validation via Netlify
+ * GMCQ License System - Remote validation via Vercel
  */
 defined( 'ABSPATH' ) || exit;
 
-// Endpoint URL - update after Vercel deployment
+// Endpoint URL - Vercel deployment
 if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
-	define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://public-omega.vercel.app/api/validate-license' );
 }
 
 function gmcq_license_is_activated(): bool {
@@ -125,7 +125,7 @@ function gmcq_render_license_page(): void {
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label for="gmcq-license-key"><?php esc_html_e( 'License Key', 'gmcq' ); ?></label></th>
-					<td><input type="text" name="license_key" id="gmcq-license-key" class="regular-text" placeholder="XXXX-XXXX-XXXX-XXXX" required></td>
+					<td><input type="text" name="license_key" id="gmcq-license-key" class="regular-text aqc-license-input" placeholder="XXXX-XXXX-XXXX-XXXX-XXX" required autocomplete="off"></td>
 				</tr>
 			</table>
 			<p class="submit"><button type="submit" class="button button-primary"><?php esc_html_e( 'Activate License', 'gmcq' ); ?></button></p>
@@ -133,7 +133,30 @@ function gmcq_render_license_page(): void {
 		</form>
 	</div>
 	<script>
+	function formatLicenseKey(value) {
+		var raw = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 19);
+		var formatted = '';
+		var groups = [4, 4, 4, 4, 3];
+		var pos = 0;
+		for (var i = 0; i < groups.length; i++) {
+			if (i > 0) formatted += '-';
+			formatted += raw.substring(pos, pos + groups[i]);
+			pos += groups[i];
+		}
+		return formatted;
+	}
 	jQuery( function( $ ) {
+		$('#gmcq-license-key').on('input paste', function() {
+			var $el = $(this);
+			var cursorPos = this.selectionStart;
+			var oldLen = $el.val().length;
+			var newVal = formatLicenseKey($el.val());
+			$el.val(newVal);
+			var newLen = newVal.length;
+			if (cursorPos === oldLen) {
+				this.setSelectionRange(newLen, newLen);
+			}
+		});
 		$( '#gmcq-license-form' ).on( 'submit', function( e ) {
 			e.preventDefault();
 			var $btn = $( this ).find( 'button[type="submit"]' ).prop( 'disabled', true ).text( '<?php echo esc_js( __( 'Activating...', 'gmcq' ) ); ?>' );

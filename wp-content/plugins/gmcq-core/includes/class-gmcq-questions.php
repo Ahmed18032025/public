@@ -71,19 +71,20 @@ function gmcq_create_question( array $data ) {
 
 	try {
 		$insert_data = array(
-			'category_id'    => ! empty( $data['category_id'] ) ? (int) $data['category_id'] : null,
-			'question_text'  => wp_kses_post( $data['question_text'] ),
-			'question_hash'  => $question_hash,
-			'question_type'  => $data['question_type'],
-			'explanation'    => isset( $data['explanation'] ) ? wp_kses_post( $data['explanation'] ) : null,
-			'difficulty'     => $data['difficulty'],
-			'marks'          => $data['marks'],
-			'negative_marks' => $data['negative_marks'],
-			'is_active'      => 1,
-			'usage_count'    => 0,
-			'created_by'     => ! empty( $data['created_by'] ) ? (int) $data['created_by'] : get_current_user_id(),
+			'category_id'      => ! empty( $data['category_id'] ) ? (int) $data['category_id'] : null,
+			'question_text'    => wp_kses_post( $data['question_text'] ),
+			'question_hash'    => $question_hash,
+			'question_type'    => $data['question_type'],
+			'explanation'      => isset( $data['explanation'] ) ? wp_kses_post( $data['explanation'] ) : null,
+			'difficulty'       => $data['difficulty'],
+			'difficulty_level' => $data['difficulty_level'],
+			'marks'            => $data['marks'],
+			'negative_marks'   => $data['negative_marks'],
+			'is_active'        => 1,
+			'usage_count'      => 0,
+			'created_by'       => ! empty( $data['created_by'] ) ? (int) $data['created_by'] : get_current_user_id(),
 		);
-		$insert_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%d' );
+		$insert_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%d' );
 
 		if ( ! empty( $data['import_id'] ) ) {
 			$insert_data['import_id'] = (int) $data['import_id'];
@@ -188,16 +189,17 @@ function gmcq_update_question( int $question_id, array $data ) {
 
 	try {
 		$update_data = array(
-			'category_id'    => ! empty( $data['category_id'] ) ? (int) $data['category_id'] : null,
-			'question_text'  => wp_kses_post( $data['question_text'] ),
-			'question_hash'  => $question_hash,
-			'question_type'  => $data['question_type'],
-			'explanation'    => isset( $data['explanation'] ) ? wp_kses_post( $data['explanation'] ) : null,
-			'difficulty'     => $data['difficulty'],
-			'marks'          => $data['marks'],
-			'negative_marks' => $data['negative_marks'],
+			'category_id'      => ! empty( $data['category_id'] ) ? (int) $data['category_id'] : null,
+			'question_text'    => wp_kses_post( $data['question_text'] ),
+			'question_hash'    => $question_hash,
+			'question_type'    => $data['question_type'],
+			'explanation'      => isset( $data['explanation'] ) ? wp_kses_post( $data['explanation'] ) : null,
+			'difficulty'       => $data['difficulty'],
+			'difficulty_level' => $data['difficulty_level'],
+			'marks'            => $data['marks'],
+			'negative_marks'   => $data['negative_marks'],
 		);
-		$update_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%f' );
+		$update_format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f' );
 
 		$updated = $wpdb->update(
 			$p . 'gmcq_questions',
@@ -596,13 +598,14 @@ function gmcq_search_questions( array $args = array() ): array {
 	global $wpdb;
 
 	$defaults = array(
-		'query'         => '',
-		'filter'        => 'active',
-		'category_id'   => 0,
-		'difficulty'    => '',
-		'question_type' => '',
-		'page'          => 1,
-		'per_page'      => 20,
+		'query'           => '',
+		'filter'          => 'active',
+		'category_id'     => 0,
+		'difficulty'      => '',
+		'difficulty_level'=> '',
+		'question_type'   => '',
+		'page'            => 1,
+		'per_page'        => 20,
 	);
 	$args    = wp_parse_args( $args, $defaults );
 	$p       = $wpdb->prefix;
@@ -653,6 +656,9 @@ function gmcq_search_questions( array $args = array() ): array {
 	if ( ! empty( $args['difficulty'] ) ) {
 		$where[]  = $wpdb->prepare( 'q.difficulty = %s', $args['difficulty'] );
 	}
+	if ( ! empty( $args['difficulty_level'] ) ) {
+		$where[]  = $wpdb->prepare( 'q.difficulty_level = %s', $args['difficulty_level'] );
+	}
 	if ( ! empty( $args['question_type'] ) ) {
 		$where[]  = $wpdb->prepare( 'q.question_type = %s', $args['question_type'] );
 	}
@@ -670,7 +676,7 @@ function gmcq_search_questions( array $args = array() ): array {
 	$results = $wpdb->get_results(
 		$wpdb->prepare(
 			"SELECT q.id, q.category_id, q.question_text, q.question_hash, q.question_type, q.difficulty,
-			        q.marks, q.negative_marks, q.is_active, q.usage_count, q.deleted_at,
+			        q.difficulty_level, q.marks, q.negative_marks, q.is_active, q.usage_count, q.deleted_at,
 			        q.created_at, c.name AS category_name
 			 FROM {$p}gmcq_questions q
 			 {$join}
@@ -755,11 +761,19 @@ function gmcq_validate_question_data( array $data, string $context = 'create', i
 		return $cat_check;
 	}
 
-	// Difficulty validation
-	$valid_difficulty = array( 'easy', 'medium', 'hard' );
-	$difficulty = isset( $data['difficulty'] ) ? sanitize_key( $data['difficulty'] ) : 'medium';
-	if ( ! in_array( $difficulty, $valid_difficulty, true ) ) {
-		$difficulty = 'medium';
+	// Difficulty mode: 'common' (easy/medium/hard) or 'level' (custom text)
+	$difficulty_mode = isset( $data['difficulty_mode'] ) ? sanitize_key( $data['difficulty_mode'] ) : 'common';
+	$difficulty = null;
+	$difficulty_level = null;
+
+	if ( $difficulty_mode === 'level' && ! empty( $data['difficulty_level'] ) ) {
+		$difficulty_level = sanitize_text_field( $data['difficulty_level'] );
+	} elseif ( $difficulty_mode === 'common' ) {
+		$valid_difficulty = array( 'easy', 'medium', 'hard' );
+		$difficulty = isset( $data['difficulty'] ) ? sanitize_key( $data['difficulty'] ) : null;
+		if ( ! in_array( $difficulty, $valid_difficulty, true ) ) {
+			$difficulty = null;
+		}
 	}
 
 	// Marks / negative marks validation
@@ -815,6 +829,7 @@ function gmcq_validate_question_data( array $data, string $context = 'create', i
 	// Return normalized data by writing back to $data
 	$data['question_type']  = $question_type;
 	$data['difficulty']     = $difficulty;
+	$data['difficulty_level'] = $difficulty_level;
 	$data['marks']          = $marks;
 	$data['negative_marks'] = $negative_marks;
 	if ( isset( $answers ) ) {
@@ -975,7 +990,8 @@ function gmcq_ajax_save_question(): void {
 		'question_text'  => isset( $_POST['question_text'] ) ? wp_kses_post( wp_unslash( $_POST['question_text'] ) ) : '',
 		'question_type'  => isset( $_POST['question_type'] ) ? sanitize_key( $_POST['question_type'] ) : 'mcq_single',
 		'explanation'    => isset( $_POST['explanation'] ) ? wp_kses_post( wp_unslash( $_POST['explanation'] ) ) : '',
-		'difficulty'     => isset( $_POST['difficulty'] ) ? sanitize_key( $_POST['difficulty'] ) : 'medium',
+		'difficulty_mode' => isset( $_POST['difficulty_mode'] ) ? sanitize_key( $_POST['difficulty_mode'] ) : 'common',
+		'difficulty_level'=> isset( $_POST['difficulty_level'] ) ? sanitize_text_field( $_POST['difficulty_level'] ) : '',
 		'marks'          => isset( $_POST['marks'] ) ? (float) $_POST['marks'] : 1.00,
 		'negative_marks' => isset( $_POST['negative_marks'] ) ? (float) $_POST['negative_marks'] : 0.25,
 		'true_is_correct'=> isset( $_POST['true_is_correct'] ) ? (int) $_POST['true_is_correct'] : 1,
@@ -1113,13 +1129,14 @@ function gmcq_ajax_search_questions(): void {
 	}
 
 	$args = array(
-		'query'         => isset( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '',
-		'filter'        => isset( $_REQUEST['filter'] ) ? sanitize_key( $_REQUEST['filter'] ) : 'active',
-		'category_id'   => isset( $_REQUEST['category_id'] ) ? (int) $_REQUEST['category_id'] : 0,
-		'difficulty'    => isset( $_REQUEST['difficulty'] ) ? sanitize_key( $_REQUEST['difficulty'] ) : '',
-		'question_type' => isset( $_REQUEST['question_type'] ) ? sanitize_key( $_REQUEST['question_type'] ) : '',
-		'page'          => isset( $_REQUEST['page'] ) ? max( 1, (int) $_REQUEST['page'] ) : 1,
-		'per_page'      => isset( $_REQUEST['per_page'] ) ? (int) $_REQUEST['per_page'] : 20,
+		'query'           => isset( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '',
+		'filter'          => isset( $_REQUEST['filter'] ) ? sanitize_key( $_REQUEST['filter'] ) : 'active',
+		'category_id'     => isset( $_REQUEST['category_id'] ) ? (int) $_REQUEST['category_id'] : 0,
+		'difficulty'        => isset( $_REQUEST['difficulty'] ) ? sanitize_key( $_REQUEST['difficulty'] ) : '',
+		'difficulty_level'  => isset( $_REQUEST['difficulty_level'] ) ? sanitize_text_field( $_REQUEST['difficulty_level'] ) : '',
+		'question_type'     => isset( $_REQUEST['question_type'] ) ? sanitize_key( $_REQUEST['question_type'] ) : '',
+		'page'              => isset( $_REQUEST['page'] ) ? max( 1, (int) $_REQUEST['page'] ) : 1,
+		'per_page'          => isset( $_REQUEST['per_page'] ) ? (int) $_REQUEST['per_page'] : 20,
 	);
 
 	$result = gmcq_search_questions( $args );
@@ -1170,15 +1187,16 @@ function gmcq_ajax_batch_save_questions(): void {
 	foreach ( $rows as $row ) {
 		$row = (array) $row;
 		$normalized[] = array(
-			'category_id'    => isset( $row['category_id'] ) ? (int) $row['category_id'] : 0,
-			'question_text'  => isset( $row['question_text'] ) ? wp_kses_post( $row['question_text'] ) : '',
-			'question_type'  => isset( $row['question_type'] ) ? sanitize_key( $row['question_type'] ) : 'mcq_single',
-			'explanation'    => isset( $row['explanation'] ) ? wp_kses_post( $row['explanation'] ) : '',
-			'difficulty'     => isset( $row['difficulty'] ) ? sanitize_key( $row['difficulty'] ) : 'medium',
-			'marks'          => isset( $row['marks'] ) ? (float) $row['marks'] : 1.00,
-			'negative_marks' => isset( $row['negative_marks'] ) ? (float) $row['negative_marks'] : 0.25,
-			'import_id'      => isset( $row['import_id'] ) ? (int) $row['import_id'] : 0,
-			'answers'        => isset( $row['answers'] ) ? (array) $row['answers'] : array(),
+			'category_id'      => isset( $row['category_id'] ) ? (int) $row['category_id'] : 0,
+			'question_text'    => isset( $row['question_text'] ) ? wp_kses_post( $row['question_text'] ) : '',
+			'question_type'    => isset( $row['question_type'] ) ? sanitize_key( $row['question_type'] ) : 'mcq_single',
+			'explanation'      => isset( $row['explanation'] ) ? wp_kses_post( $row['explanation'] ) : '',
+			'difficulty'       => isset( $row['difficulty'] ) ? sanitize_key( $row['difficulty'] ) : null,
+			'difficulty_level' => isset( $row['difficulty_level'] ) ? sanitize_text_field( $row['difficulty_level'] ) : null,
+			'marks'            => isset( $row['marks'] ) ? (float) $row['marks'] : 1.00,
+			'negative_marks'   => isset( $row['negative_marks'] ) ? (float) $row['negative_marks'] : 0.25,
+			'import_id'        => isset( $row['import_id'] ) ? (int) $row['import_id'] : 0,
+			'answers'          => isset( $row['answers'] ) ? (array) $row['answers'] : array(),
 		);
 	}
 
@@ -1331,7 +1349,17 @@ function gmcq_render_questions_page(): void {
 								</td>
 								<td><?php echo $q->category_name ? esc_html( $q->category_name ) : '<em style="color:#999">' . esc_html__( 'None', 'gmcq' ) . '</em>'; ?></td>
 								<td><?php echo esc_html( $type_label[ $q->question_type ] ?? $q->question_type ); ?></td>
-								<td><span style="color:<?php echo esc_attr( $diff_color[ $q->difficulty ] ?? '#666' ); ?>;font-weight:600"><?php echo esc_html( ucfirst( $q->difficulty ) ); ?></span></td>
+								<td>
+									<?php if ( $q->difficulty_level ) : ?>
+										<?php echo esc_html( $q->difficulty_level ); ?>
+									<?php elseif ( $q->difficulty ) : ?>
+										<span style="color:<?php echo esc_attr( $diff_color[ $q->difficulty ] ?? '#666' ); ?>;font-weight:600">
+											<?php echo esc_html( ucfirst( $q->difficulty ) ); ?>
+										</span>
+									<?php else : ?>
+										<em style="color:#999"><?php esc_html_e( 'None', 'gmcq' ); ?></em>
+									<?php endif; ?>
+								</td>
 								<td><?php echo (int) $q->usage_count; ?></td>
 							</tr>
 						<?php endforeach; endif; ?>
@@ -1441,13 +1469,14 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 	$list_url = admin_url( 'admin.php?page=gmcq-questions' );
 
 	// Pre-fill values
-	$q_text      = $is_edit ? $q->question_text : '';
-	$q_type      = $is_edit ? $q->question_type : 'mcq_single';
-	$q_diff      = $is_edit ? $q->difficulty : 'medium';
-	$q_marks     = $is_edit ? $q->marks : 1.00;
-	$q_neg_marks = $is_edit ? $q->negative_marks : 0.25;
-	$q_cat       = $is_edit ? (int) $q->category_id : 0;
-	$q_expl      = $is_edit ? $q->explanation : '';
+	$q_text          = $is_edit ? $q->question_text : '';
+	$q_type          = $is_edit ? $q->question_type : 'mcq_single';
+	$q_diff          = $is_edit ? $q->difficulty : '';
+	$q_diff_level    = $is_edit ? ( $q->difficulty_level ?? '' ) : '';
+	$q_marks         = $is_edit ? $q->marks : 1.00;
+	$q_neg_marks     = $is_edit ? $q->negative_marks : 0.25;
+	$q_cat           = $is_edit ? (int) $q->category_id : 0;
+	$q_expl          = $is_edit ? $q->explanation : '';
 	$answers     = $is_edit ? (array) $q->answers : array(
 		array( 'answer_text' => '', 'is_correct' => 0 ),
 		array( 'answer_text' => '', 'is_correct' => 0 ),
@@ -1510,13 +1539,32 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="gmcq-q-difficulty"><?php esc_html_e( 'Difficulty', 'gmcq' ); ?></label></th>
+						<th scope="row"><?php esc_html_e( 'Difficulty', 'gmcq' ); ?></th>
 						<td>
-							<select name="difficulty" id="gmcq-q-difficulty">
-								<option value="easy"   <?php selected( $q_diff, 'easy' ); ?>><?php esc_html_e( 'Easy', 'gmcq' ); ?></option>
-								<option value="medium" <?php selected( $q_diff, 'medium' ); ?>><?php esc_html_e( 'Medium', 'gmcq' ); ?></option>
-								<option value="hard"   <?php selected( $q_diff, 'hard' ); ?>><?php esc_html_e( 'Hard', 'gmcq' ); ?></option>
-							</select>
+							<div class="gmcq-difficulty-toggle" style="margin-bottom:10px">
+								<label style="margin-right:15px">
+									<input type="radio" name="difficulty_mode" value="common" <?php checked( empty( $q_diff_level ) ); ?>> 
+									<?php esc_html_e( 'Common', 'gmcq' ); ?>
+								</label>
+								<label>
+									<input type="radio" name="difficulty_mode" value="level" <?php checked( ! empty( $q_diff_level ) ); ?>> 
+									<?php esc_html_e( 'Level', 'gmcq' ); ?>
+								</label>
+							</div>
+							<div id="gmcq-common-difficulty">
+								<select name="difficulty" id="gmcq-q-difficulty">
+									<option value=""><?php esc_html_e( '— None —', 'gmcq' ); ?></option>
+									<option value="easy"   <?php selected( $q_diff, 'easy' ); ?>><?php esc_html_e( 'Easy', 'gmcq' ); ?></option>
+									<option value="medium" <?php selected( $q_diff, 'medium' ); ?>><?php esc_html_e( 'Medium', 'gmcq' ); ?></option>
+									<option value="hard"   <?php selected( $q_diff, 'hard' ); ?>><?php esc_html_e( 'Hard', 'gmcq' ); ?></option>
+								</select>
+							</div>
+							<div id="gmcq-level-difficulty" style="display:none">
+								<input type="text" name="difficulty_level" id="gmcq-q-difficulty-level" 
+									   value="<?php echo esc_attr( $q_diff_level ); ?>" 
+									   placeholder="<?php esc_attr_e( 'Enter level (e.g., Level 1, Advanced)', 'gmcq' ); ?>" 
+									   style="width:200px">
+							</div>
 						</td>
 					</tr>
 					<tr>
@@ -1634,8 +1682,25 @@ function gmcq_render_question_form( int $question_id, $q = null ): void {
 			});
 		}
 		$('#gmcq-q-type').on('change', updateAnswerInputs);
-		updateAnswerInputs();
-		$('#gmcq-add-answer').on('click', function(){
+updateAnswerInputs();
+			// Difficulty mode toggle
+			$('input[name="difficulty_mode"]').on('change', function(){
+				if ($(this).val() === 'common') {
+					$('#gmcq-common-difficulty').show();
+					$('#gmcq-level-difficulty').hide();
+				} else {
+					$('#gmcq-common-difficulty').hide();
+					$('#gmcq-level-difficulty').show();
+				}
+			});
+			// Pre-check correct mode on edit
+			var qDiffLevel = '<?php echo esc_js( $q_diff_level ); ?>';
+			if (qDiffLevel) {
+				$('input[name="difficulty_mode"][value="level"]').prop('checked', true).trigger('change');
+			} else {
+				$('input[name="difficulty_mode"][value="common"]').prop('checked', true);
+			}
+			$('#gmcq-add-answer').on('click', function(){
 			var count = parseInt($('#gmcq-answer-count').val());
 			if (count >= 6) { alert('<?php echo esc_js( __( 'Maximum 6 answer options.', 'gmcq' ) ); ?>'); return; }
 			var type = $('#gmcq-q-type').val();

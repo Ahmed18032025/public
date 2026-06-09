@@ -90,6 +90,7 @@ function gmcq_render_license_page(): void {
 			<p><strong><?php esc_html_e( 'Status:', 'gmcq' ); ?></strong> <span class="gmcq-status-ok"><?php esc_html_e( 'Activated', 'gmcq' ); ?></span></p>
 			<p><strong><?php esc_html_e( 'License Key:', 'gmcq' ); ?></strong> <?php echo esc_html( $key_masked ); ?></p>
 			<p><strong><?php esc_html_e( 'Activated:', 'gmcq' ); ?></strong> <?php echo esc_html( gmdate( 'Y-m-d H:i:s', get_option( 'gmcq_license_activated_at', 0 ) ) ); ?></p>
+ 			<p><strong><?php esc_html_e( 'Expires:', 'gmcq' ); ?></strong> <?php echo esc_html( gmdate( 'Y-m-d H:i:s', get_option( 'gmcq_license_activated_at', 0 ) + ( 365 * DAY_IN_SECONDS ) ) ); ?></p>
 			<button type="button" class="button" id="gmcq-deactivate-license"><?php esc_html_e( 'Deactivate License', 'gmcq' ); ?></button>
 		</div>
 		<script>

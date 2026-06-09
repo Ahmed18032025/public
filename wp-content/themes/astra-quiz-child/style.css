@@ -11,10 +11,10 @@ Text Domain: astra-quiz-child
 :root {
 	--aqc-bg: #070b1f;
 	--aqc-bg-soft: #10183a;
-	--aqc-primary: #6d5dfc;
-	--aqc-secondary: #00d4ff;
-	--aqc-accent: #ffcf5c;
-	--aqc-green: #35e2a2;
+	--aqc-primary: var(--ast-global-color-4, #6d5dfc);
+	--aqc-secondary: var(--ast-global-color-5, #00d4ff);
+	--aqc-accent: var(--ast-global-color-0, #ffcf5c);
+	--aqc-green: var(--ast-global-color-6, #35e2a2);
 	--aqc-text: #f7f9ff;
 	--aqc-muted: #b7c0df;
 	--aqc-card: rgba(255, 255, 255, 0.1);

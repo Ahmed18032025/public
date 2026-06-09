@@ -48,3 +48,8 @@ function aqc_homepage_body_class( array $classes ): array {
 	return $classes;
 }
 add_filter( 'body_class', 'aqc_homepage_body_class' );
+
+/**
+ * Support Astra Global Colors.
+ */
+add_theme_support( 'astra-global-color' );

@@ -1,11 +1,31 @@
 # GMCQ Quiz Engine - Developer Guide
 
-## Installation
+## Astra Quiz Child Theme
+
+### Global Colors Support
+The child theme uses Astra's Global Color Palette variables:
+- `--aqc-primary` → `--ast-global-color-4` (Astra primary)
+- `--aqc-secondary` → `--ast-global-color-5` (Astra secondary)  
+- `--aqc-accent` → `--ast-global-color-0` (Astra accent)
+- `--aqc-green` → `--ast-global-color-6` (Astra heading color)
+
+To customize colors:
+1. Go to **Appearance → Customize → Global → Colors**
+2. Change "Primary Color" and "Secondary Color"
+3. The child theme will automatically inherit these values
+
+### Deployment to Live Website
 
 ### Prerequisites
 - WordPress 6.0+
+- Astra parent theme installed and activated
 - PHP 7.4+
-- MySQL 5.7+
+
+### Theme Installation
+1. Zip the `astra-quiz-child` folder or upload via **Appearance → Themes → Add New → Upload Theme**
+2. Or upload via FTP/SFTP to `/wp-content/themes/astra-quiz-child/`
+3. Go to **Appearance → Themes** and click "Activate" on "Astra Quiz Child"
+4. Ensure "Astra" parent theme is active
 
 ### Plugin Installation
 1. Copy the `wp-content/plugins/gmcq-core` folder to your WordPress installation

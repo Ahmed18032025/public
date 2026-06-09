@@ -15,7 +15,7 @@ if ( ! defined( 'GMCQ_VERSION' ) ) {
 	define( 'GMCQ_VERSION', '1.0.0' );
 }
 if ( ! defined( 'GMCQ_DB_VERSION' ) ) {
-	define( 'GMCQ_DB_VERSION', '1.0.0' );
+	define( 'GMCQ_DB_VERSION', '1.0.1' );
 }
 if ( ! defined( 'GMCQ_PLUGIN_DIR' ) ) {
 	define( 'GMCQ_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

@@ -1,6 +1,7 @@
 <?php
 /**
  * Modern quiz website homepage for the Astra Quiz Child theme.
+ * Uses dynamic data from the GMCQ Quiz Engine plugin.
  *
  * @package Astra_Quiz_Child
  */
@@ -8,6 +9,22 @@
 defined( 'ABSPATH' ) || exit;
 
 get_header();
+
+// ── Dynamic data from GMCQ ──────────────────────────────────────────────
+$dashboard_stats  = function_exists( 'gmcq_get_dashboard_stats' ) ? gmcq_get_dashboard_stats() : array();
+$top_quizzes      = function_exists( 'gmcq_get_top_quizzes' ) ? gmcq_get_top_quizzes( 6 ) : array();
+$recent_quizzes   = function_exists( 'gmcq_get_recent_quizzes' ) ? gmcq_get_recent_quizzes( 6 ) : array();
+$category_tree    = function_exists( 'gmcq_get_category_tree' ) ? gmcq_get_category_tree( array( 'filter' => 'active' ) ) : array();
+
+// Fallback stats if plugin not active or DB empty
+$stat_questions   = ! empty( $dashboard_stats['active_questions'] ) ? $dashboard_stats['active_questions'] : 500;
+$stat_quizzes     = ! empty( $dashboard_stats['published_quizzes'] ) ? $dashboard_stats['published_quizzes'] : 25;
+$stat_categories  = ! empty( $dashboard_stats['top_level_categories'] ) ? $dashboard_stats['top_level_categories'] : 6;
+$stat_attempts    = ! empty( $dashboard_stats['total_attempts'] ) ? $dashboard_stats['total_attempts'] : 0;
+
+// Number formatting for large numbers
+$questions_display = $stat_questions > 999 ? round( $stat_questions / 1000, 1 ) . 'k+' : $stat_questions . '+';
+$attempts_display  = $stat_attempts > 999 ? round( $stat_attempts / 1000, 1 ) . 'k+' : $stat_attempts . '+';
 ?>
 
 <main id="primary" class="aqc-homepage">
@@ -16,13 +33,14 @@ get_header();
 		<span class="aqc-orb aqc-orb-two"></span>
 		<span class="aqc-orb aqc-orb-three"></span>
 	</div>
+	<div class="aqc-snowfall" aria-hidden="true"></div>
 
 	<header class="aqc-header">
 		<div class="aqc-container">
 			<nav class="aqc-nav" aria-label="Homepage navigation">
 				<a class="aqc-brand" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="Home">
 					<span class="aqc-brand-mark">✓</span>
-					<span>ExamQuiz Pro</span>
+					<span>Government MCQ</span>
 				</a>
 
 				<ul class="aqc-menu">
@@ -40,7 +58,7 @@ get_header();
 		<div class="aqc-container aqc-hero-grid">
 			<div class="aqc-hero-copy">
 				<span class="aqc-badge"><span class="aqc-pulse"></span> Daily practice for government exam aspirants</span>
-				<h1>Prepare smarter for <span class="aqc-gradient-text">government exams</span>.</h1>
+				<h1>Prepare  smarter  for  <span class="aqc-gradient-text"> government  exams </span>.</h1>
 				<p>
 					Practice exam-oriented MCQs for SSC, Railway, Banking, Defence, Police, State PSC and General Knowledge.
 					Build speed, accuracy and confidence with focused quiz preparation.
@@ -52,10 +70,16 @@ get_header();
 				</div>
 
 				<div class="aqc-quick-stats" aria-label="Preparation highlights">
-					<div class="aqc-stat"><strong>500+</strong><span>Practice MCQs</span></div>
-					<div class="aqc-stat"><strong>25+</strong><span>Mock Sets</span></div>
-					<div class="aqc-stat"><strong>6</strong><span>Exam Categories</span></div>
+					<div class="aqc-stat"><strong><?php echo esc_html( $questions_display ); ?></strong><span>Practice MCQs</span></div>
+					<div class="aqc-stat"><strong><?php echo (int) $stat_quizzes; ?>+</strong><span>Mock Sets</span></div>
+					<div class="aqc-stat"><strong><?php echo (int) $stat_categories; ?></strong><span>Exam Categories</span></div>
 				</div>
+
+				<?php if ( $stat_attempts > 0 ) : ?>
+				<div class="aqc-quick-stats" style="margin-top:12px" aria-label="Community activity">
+					<div class="aqc-stat"><strong><?php echo esc_html( $attempts_display ); ?></strong><span>Tests Completed</span></div>
+				</div>
+				<?php endif; ?>
 			</div>
 
 			<aside class="aqc-hero-card" aria-label="Sample quiz preview">
@@ -87,12 +111,42 @@ get_header();
 			</div>
 
 			<div class="aqc-grid">
-				<article class="aqc-feature-card"><span class="aqc-icon">📘</span><h3>SSC & CGL Practice</h3><p>Quantitative aptitude, reasoning, English and general awareness quizzes for SSC exams.</p></article>
-				<article class="aqc-feature-card"><span class="aqc-icon">🚆</span><h3>Railway Exams</h3><p>RRB NTPC, Group D and ALP-style practice sets with speed-focused question patterns.</p></article>
-				<article class="aqc-feature-card"><span class="aqc-icon">🏦</span><h3>Banking Awareness</h3><p>Reasoning, banking awareness, current affairs and numerical ability for bank aspirants.</p></article>
-				<article class="aqc-feature-card"><span class="aqc-icon">🛡️</span><h3>Defence & Police</h3><p>General studies, physical-test written preparation, constitution and basic science MCQs.</p></article>
-				<article class="aqc-feature-card"><span class="aqc-icon">🏛️</span><h3>State PSC</h3><p>State-level GK, polity, history, geography and administrative awareness quizzes.</p></article>
-				<article class="aqc-feature-card"><span class="aqc-icon">🌍</span><h3>General Knowledge</h3><p>Daily GK and current-affairs based practice to strengthen your overall exam readiness.</p></article>
+				<?php if ( ! empty( $category_tree ) ) : ?>
+					<?php foreach ( $category_tree as $parent ) : ?>
+						<article class="aqc-feature-card">
+							<span class="aqc-icon">📘</span>
+							<h3><?php echo esc_html( $parent->name ); ?></h3>
+							<p>
+								<?php
+								echo ! empty( $parent->description )
+									? esc_html( $parent->description )
+									: esc_html( 'Practice ' . strtolower( $parent->name ) . ' questions for competitive exams.' );
+								?>
+								<?php if ( ! empty( $parent->children ) ) : ?>
+								<br><br><strong style="color:var(--aqc-secondary);font-size:0.9rem">
+									<?php
+									$child_names = array();
+									foreach ( $parent->children as $child ) {
+										$child_names[] = $child->name;
+									}
+									echo esc_html( implode( ' · ', array_slice( $child_names, 0, 4 ) ) );
+									if ( count( $child_names ) > 4 ) {
+										echo ' +' . ( count( $child_names ) - 4 ) . ' more';
+									}
+									?>
+								</strong>
+								<?php endif; ?>
+							</p>
+						</article>
+					<?php endforeach; ?>
+				<?php else : ?>
+					<article class="aqc-feature-card"><span class="aqc-icon">📘</span><h3>SSC & CGL Practice</h3><p>Quantitative aptitude, reasoning, English and general awareness quizzes for SSC exams.</p></article>
+					<article class="aqc-feature-card"><span class="aqc-icon">🚆</span><h3>Railway Exams</h3><p>RRB NTPC, Group D and ALP-style practice sets with speed-focused question patterns.</p></article>
+					<article class="aqc-feature-card"><span class="aqc-icon">🏦</span><h3>Banking Awareness</h3><p>Reasoning, banking awareness, current affairs and numerical ability for bank aspirants.</p></article>
+					<article class="aqc-feature-card"><span class="aqc-icon">🛡️</span><h3>Defence & Police</h3><p>General studies, physical-test written preparation, constitution and basic science MCQs.</p></article>
+					<article class="aqc-feature-card"><span class="aqc-icon">🏛️</span><h3>State PSC</h3><p>State-level GK, polity, history, geography and administrative awareness quizzes.</p></article>
+					<article class="aqc-feature-card"><span class="aqc-icon">🌍</span><h3>General Knowledge</h3><p>Daily GK and current-affairs based practice to strengthen your overall exam readiness.</p></article>
+				<?php endif; ?>
 			</div>
 		</div>
 	</section>
@@ -105,10 +159,66 @@ get_header();
 			</div>
 
 			<div class="aqc-grid">
-				<article class="aqc-quiz-card"><span class="aqc-quiz-tag">SSC Mock</span><h3>SSC General Awareness - Set 01</h3><p>Polity, history, geography and science questions for quick revision.</p><div class="aqc-quiz-meta"><span>50 Questions</span><span>45 Minutes</span><span>Beginner</span></div></article>
-				<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Banking</span><h3>Banking Current Affairs Sprint</h3><p>Practice recent economy, RBI, schemes and banking-awareness updates.</p><div class="aqc-quiz-meta"><span>40 Questions</span><span>30 Minutes</span><span>Moderate</span></div></article>
-				<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Railway</span><h3>RRB Reasoning Speed Test</h3><p>Improve accuracy in series, coding-decoding, analogy and puzzles.</p><div class="aqc-quiz-meta"><span>35 Questions</span><span>25 Minutes</span><span>Timed</span></div></article>
+				<?php if ( ! empty( $top_quizzes ) ) : ?>
+					<?php foreach ( $top_quizzes as $quiz ) : ?>
+						<article class="aqc-quiz-card">
+							<?php
+							// Determine a tag label from category or default
+							$quiz_tag = 'Mock Test';
+							if ( ! empty( $quiz->category_name ) ) {
+								$quiz_tag = $quiz->category_name;
+							}
+							?>
+							<span class="aqc-quiz-tag"><?php echo esc_html( $quiz_tag ); ?></span>
+							<h3>
+								<a href="<?php echo esc_url( get_permalink( $quiz->quiz_id ) ); ?>">
+									<?php echo esc_html( $quiz->post_title ); ?>
+								</a>
+							</h3>
+							<p>Practice with <?php echo (int) $quiz->question_count; ?> questions in a timed environment to test your knowledge.</p>
+							<div class="aqc-quiz-meta">
+								<span><?php echo (int) $quiz->question_count; ?> Questions</span>
+								<?php if ( ! empty( $quiz->time_limit ) ) : ?>
+									<span><?php echo (int) $quiz->time_limit; ?> Minutes</span>
+								<?php endif; ?>
+								<?php if ( ! empty( $quiz->attempt_count ) ) : ?>
+									<span><?php echo (int) $quiz->attempt_count; ?> Attempts</span>
+								<?php endif; ?>
+							</div>
+						</article>
+					<?php endforeach; ?>
+				<?php else : ?>
+					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">SSC Mock</span><h3>SSC General Awareness - Set 01</h3><p>Polity, history, geography and science questions for quick revision.</p><div class="aqc-quiz-meta"><span>50 Questions</span><span>45 Minutes</span><span>Beginner</span></div></article>
+					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Banking</span><h3>Banking Current Affairs Sprint</h3><p>Practice recent economy, RBI, schemes and banking-awareness updates.</p><div class="aqc-quiz-meta"><span>40 Questions</span><span>30 Minutes</span><span>Moderate</span></div></article>
+					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Railway</span><h3>RRB Reasoning Speed Test</h3><p>Improve accuracy in series, coding-decoding, analogy and puzzles.</p><div class="aqc-quiz-meta"><span>35 Questions</span><span>25 Minutes</span><span>Timed</span></div></article>
+				<?php endif; ?>
 			</div>
+
+			<?php if ( ! empty( $recent_quizzes ) && count( $recent_quizzes ) > 3 ) : ?>
+			<div style="margin-top:32px">
+				<div class="aqc-section-heading">
+					<h2>Recently added</h2>
+					<p>New quiz sets to keep your preparation updated with fresh questions.</p>
+				</div>
+				<div class="aqc-grid">
+					<?php foreach ( array_slice( $recent_quizzes, 0, 3 ) as $quiz ) : ?>
+						<article class="aqc-quiz-card">
+							<span class="aqc-quiz-tag">New</span>
+							<h3>
+								<a href="<?php echo esc_url( get_permalink( $quiz->quiz_id ) ); ?>">
+									<?php echo esc_html( $quiz->post_title ); ?>
+								</a>
+							</h3>
+							<p>Recently published quiz set with fresh practice questions — try it now.</p>
+							<div class="aqc-quiz-meta">
+								<span><?php echo (int) $quiz->question_count; ?> Questions</span>
+								<span><?php echo esc_html( human_time_diff( strtotime( $quiz->created_at ), current_time( 'timestamp' ) ) ); ?> ago</span>
+							</div>
+						</article>
+					<?php endforeach; ?>
+				</div>
+			</div>
+			<?php endif; ?>
 		</div>
 	</section>
 

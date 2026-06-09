@@ -24,6 +24,16 @@ function aqc_enqueue_styles(): void {
 		array( 'astra-parent-style' ),
 		wp_get_theme()->get( 'Version' )
 	);
+
+	if ( is_front_page() ) {
+		wp_enqueue_script(
+			'astra-quiz-child-homepage',
+			get_stylesheet_directory_uri() . '/homepage.js',
+			array(),
+			wp_get_theme()->get( 'Version' ),
+			true
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'aqc_enqueue_styles', 20 );
 

@@ -25,7 +25,7 @@ module.exports = function handler(req, res) {
       .update(license_key)
       .digest('hex');
 
-    const isValid = VALID_LICENSES.includes(hashedKey);
+    const isValid = VALID_LICENSES.map(l => l.toLowerCase()).includes(hashedKey.toLowerCase());
 
     if (!isValid) {
       res.status(403).json({

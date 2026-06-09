@@ -72,7 +72,7 @@ exports.handler = async (event, context) => {
         iat: Math.floor(Date.now() / 1000)
       },
       jwtSecret,
-      { expiresIn: '30d' }
+      { expiresIn: '365d' }
     );
 
     return {
@@ -83,7 +83,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         valid: true,
         token,
-        expires_in: 2592000
+        expires_in: 31536000
       })
     };
   } catch (error) {

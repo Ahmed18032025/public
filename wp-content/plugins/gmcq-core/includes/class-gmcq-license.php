@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Endpoint URL - Vercel deployment
 if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
-	define( 'GMCQ_LICENSE_ENDPOINT', 'https://public-omega.vercel.app/api/validate-license' );
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://public-xi-seven-92.vercel.app/api/validate-license' );
 }
 
 function gmcq_license_is_activated(): bool {

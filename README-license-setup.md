@@ -69,17 +69,17 @@ Write-Host "Hash: $hash"
 ```
 
 ### 6. Update WordPress Plugin
-After deploying to Vercel, you'll get a URL like `https://gmcq-license.vercel.app`.
+After deploying to Vercel, you'll get a URL like `https://public-xi-seven-92.vercel.app`.
 
 Open `wp-content/plugins/gmcq-core/gmcq-core.php` line 29 and update:
 ```php
-define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
+define( 'GMCQ_LICENSE_ENDPOINT', 'https://public-xi-seven-92.vercel.app/api/validate-license' );
 ```
 
 Also update `wp-content/plugins/gmcq-core/includes/class-gmcq-license.php` line 9 with the same URL.
 
 ### 7. Verify Setup
-- [ ] Visit your Vercel function URL directly: `https://YOUR-PROJECT.vercel.app/api/validate-license` — should return a 405 JSON response (only accepts POST)
+- [ ] Visit your Vercel function URL directly: `https://public-xi-seven-92.vercel.app/api/validate-license` — should return a 405 JSON response (only accepts POST)
 - [ ] In WordPress admin, go to **GMCQ → License** and try activating with one of the sample keys
 - [ ] Confirm the license status shows "Activated"
 

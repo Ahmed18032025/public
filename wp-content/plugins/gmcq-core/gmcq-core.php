@@ -26,7 +26,7 @@ if ( ! defined( 'GMCQ_PLUGIN_URL' ) ) {
 
 // License endpoint - update after Vercel deployment
 if ( ! defined( 'GMCQ_LICENSE_ENDPOINT' ) ) {
-	define( 'GMCQ_LICENSE_ENDPOINT', 'https://YOUR-PROJECT.vercel.app/api/validate-license' );
+	define( 'GMCQ_LICENSE_ENDPOINT', 'https://public-xi-seven-92.vercel.app/api/validate-license' );
 }
 
 $gmcq_core_files = array(

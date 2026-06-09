@@ -58,10 +58,9 @@ $attempts_display  = $stat_attempts > 999 ? round( $stat_attempts / 1000, 1 ) . 
 		<div class="aqc-container aqc-hero-grid">
 			<div class="aqc-hero-copy">
 				<span class="aqc-badge"><span class="aqc-pulse"></span> Daily practice for government exam aspirants</span>
-				<h1>Prepare  smarter  for  <span class="aqc-gradient-text"> government  exams </span>.</h1>
+				<h1><?php echo esc_html( aqc_get_homepage_setting( 'aqc_hero_title', __( 'Prepare smarter for government exams.', 'astra-quiz-child' ) ) ); ?></h1>
 				<p>
-					Practice exam-oriented MCQs for SSC, Railway, Banking, Defence, Police, State PSC and General Knowledge.
-					Build speed, accuracy and confidence with focused quiz preparation.
+					<?php echo esc_html( aqc_get_homepage_setting( 'aqc_hero_description', __( 'Practice exam-oriented MCQs for SSC, Railway, Banking, Defence, Police, State PSC and General Knowledge. Build speed, accuracy and confidence with focused quiz preparation.', 'astra-quiz-child' ) ) ); ?>
 				</p>
 
 				<div class="aqc-actions">
@@ -161,14 +160,8 @@ $attempts_display  = $stat_attempts > 999 ? round( $stat_attempts / 1000, 1 ) . 
 			<div class="aqc-grid">
 				<?php if ( ! empty( $top_quizzes ) ) : ?>
 					<?php foreach ( $top_quizzes as $quiz ) : ?>
-						<article class="aqc-quiz-card">
-							<?php
-							// Determine a tag label from category or default
-							$quiz_tag = 'Mock Test';
-							if ( ! empty( $quiz->category_name ) ) {
-								$quiz_tag = $quiz->category_name;
-							}
-							?>
+						<?php $quiz_tag = ! empty( $quiz->category_name ) ? $quiz->category_name : 'Mock Test'; ?>
+						<article class="aqc-quiz-card" data-analytics='{"quiz_id":<?php echo (int) $quiz->quiz_id; ?>,"quiz_title":"<?php echo esc_js( $quiz->post_title ); ?>","category":"<?php echo esc_js( $quiz_tag ); ?>"}'>
 							<span class="aqc-quiz-tag"><?php echo esc_html( $quiz_tag ); ?></span>
 							<h3>
 								<a href="<?php echo esc_url( get_permalink( $quiz->quiz_id ) ); ?>">
@@ -188,9 +181,9 @@ $attempts_display  = $stat_attempts > 999 ? round( $stat_attempts / 1000, 1 ) . 
 						</article>
 					<?php endforeach; ?>
 				<?php else : ?>
-					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">SSC Mock</span><h3>SSC General Awareness - Set 01</h3><p>Polity, history, geography and science questions for quick revision.</p><div class="aqc-quiz-meta"><span>50 Questions</span><span>45 Minutes</span><span>Beginner</span></div></article>
-					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Banking</span><h3>Banking Current Affairs Sprint</h3><p>Practice recent economy, RBI, schemes and banking-awareness updates.</p><div class="aqc-quiz-meta"><span>40 Questions</span><span>30 Minutes</span><span>Moderate</span></div></article>
-					<article class="aqc-quiz-card"><span class="aqc-quiz-tag">Railway</span><h3>RRB Reasoning Speed Test</h3><p>Improve accuracy in series, coding-decoding, analogy and puzzles.</p><div class="aqc-quiz-meta"><span>35 Questions</span><span>25 Minutes</span><span>Timed</span></div></article>
+					<article class="aqc-quiz-card" data-analytics='{"quiz_id":0,"quiz_title":"SSC General Awareness - Set 01","category":"SSC Mock"}'><span class="aqc-quiz-tag">SSC Mock</span><h3>SSC General Awareness - Set 01</h3><p>Polity, history, geography and science questions for quick revision.</p><div class="aqc-quiz-meta"><span>50 Questions</span><span>45 Minutes</span><span>Beginner</span></div></article>
+					<article class="aqc-quiz-card" data-analytics='{"quiz_id":0,"quiz_title":"Banking Current Affairs Sprint","category":"Banking"}'><span class="aqc-quiz-tag">Banking</span><h3>Banking Current Affairs Sprint</h3><p>Practice recent economy, RBI, schemes and banking-awareness updates.</p><div class="aqc-quiz-meta"><span>40 Questions</span><span>30 Minutes</span><span>Moderate</span></div></article>
+					<article class="aqc-quiz-card" data-analytics='{"quiz_id":0,"quiz_title":"RRB Reasoning Speed Test","category":"Railway"}'><span class="aqc-quiz-tag">Railway</span><h3>RRB Reasoning Speed Test</h3><p>Improve accuracy in series, coding-decoding, analogy and puzzles.</p><div class="aqc-quiz-meta"><span>35 Questions</span><span>25 Minutes</span><span>Timed</span></div></article>
 				<?php endif; ?>
 			</div>
 
@@ -255,9 +248,9 @@ $attempts_display  = $stat_attempts > 999 ? round( $stat_attempts / 1000, 1 ) . 
 	<section class="aqc-cta">
 		<div class="aqc-container">
 			<div class="aqc-cta-box">
-				<h2>Ready to start your next mock test?</h2>
-				<p>Make quiz practice part of your daily routine and prepare confidently for upcoming government exams.</p>
-				<a class="aqc-btn aqc-btn-primary" href="<?php echo esc_url( home_url( '/all-quizzes/' ) ); ?>">Start Practicing Today</a>
+				<h2><?php echo esc_html( aqc_get_homepage_setting( 'aqc_cta_title', __( 'Ready to start your next mock test?', 'astra-quiz-child' ) ) ); ?></h2>
+				<p><?php echo esc_html( aqc_get_homepage_setting( 'aqc_cta_description', __( 'Make quiz practice part of your daily routine and prepare confidently for upcoming government exams.', 'astra-quiz-child' ) ) ); ?></p>
+				<a class="aqc-btn aqc-btn-primary" href="<?php echo esc_url( home_url( '/all-quizzes/' ) ) ?>">Start Practicing Today</a>
 			</div>
 		</div>
 	</section>

@@ -33,7 +33,7 @@
     --gmcq-radius-sm: 8px;
     --gmcq-radius-lg: 24px;
     --gmcq-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --gmcq-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --gmcq-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --gmcq-container: 1200px;
     --gmcq-header-offset: 0px;
 }
@@ -1635,6 +1635,38 @@
     .gmcq-cta-title {
         font-size: 24px;
     }
+}
+
+/* ============================================================
+   PLACEHOLDER & INPUT FIXES
+   ============================================================ */
+.gmcq-search-input::placeholder,
+.gmcq-q-search-input::placeholder,
+.gmcq-blog-search-input::placeholder,
+.gmcq-form-input::placeholder,
+.gmcq-form-textarea::placeholder {
+    color: #6B7280 !important;
+    opacity: 1 !important;
+    font-weight: 400;
+}
+
+/* Fix button text + icon overlap - ensure gap is always respected */
+.gmcq-btn i,
+.gmcq-btn .fas,
+.gmcq-btn .far,
+.gmcq-btn .fab {
+    flex-shrink: 0;
+    min-width: 14px;
+    text-align: center;
+}
+
+.gmcq-btn-large i {
+    margin-right: 0;
+}
+
+/* Ensure no gap issue in full-width buttons */
+.gmcq-btn-full {
+    gap: 10px;
 }
 
 /* ============================================================

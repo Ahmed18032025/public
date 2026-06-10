@@ -1,3 +1,4 @@
+
 /* ============================================================
    GOVERNMENT MCQ - CONTACT PAGE STYLES
    Premium contact form, info cards, FAQ accordion.
@@ -159,8 +160,7 @@
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
-.gmcq-form-input::placeholder,
-.gmcq-form-textarea::placeholder { color: var(--gmcq-text-lighter); }
+/* Placeholder colors handled globally in gmcq-homepage.css */
 
 .gmcq-form-select {
     -webkit-appearance: none;

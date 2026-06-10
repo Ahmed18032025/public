@@ -1601,6 +1601,22 @@
 }
 
 /* ============================================================
+   HERO ABOVE-THE-FOLD FIX
+   Hero elements are always visible — no scroll animation needed.
+   The hero already has its own JS-powered fade-in via
+   initHeroAnimation(), so these CSS animation classes must not
+   hide the content.  The IntersectionObserver race condition on
+   page refresh caused the hero to stay at opacity:0.
+   ============================================================ */
+.gmcq-hero .gmcq-animate-fade-in-up,
+.gmcq-hero .gmcq-animate-fade-in-right,
+.gmcq-hero .gmcq-animate-fade-in-left {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* ============================================================
    ADMIN BAR SPACING
    ============================================================ */
 .admin-bar .gmcq-homepage {

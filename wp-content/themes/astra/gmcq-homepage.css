@@ -1670,6 +1670,44 @@
 }
 
 /* ============================================================
+   INPUT / SELECT / TEXTAREA FIXES - vertical text cutoff
+   ============================================================ */
+.gmcq-search-input,
+.gmcq-q-search-input,
+.gmcq-blog-search-input,
+.gmcq-form-input,
+.gmcq-form-textarea {
+    line-height: 1.4 !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+/* Select elements - let the browser render natively without vertical padding
+   (Windows OS ignores padding on <select> elements which causes text cutoff) */
+.gmcq-form-select,
+.gmcq-q-select-wrap select {
+    min-height: 40px;
+    padding-left: 0;
+    padding-right: 0;
+    font-size: 14px;
+    line-height: normal;
+}
+
+/* Textarea should have more height */
+.gmcq-form-textarea {
+    min-height: 120px;
+}
+
+/* Search inputs need proper left padding for icon */
+.gmcq-search-input,
+.gmcq-q-search-input,
+.gmcq-blog-search-input {
+    padding-left: 44px !important;
+}
+
+/* ============================================================
    ASTRA COMPATIBILITY
    ============================================================ */
 .ast-container {

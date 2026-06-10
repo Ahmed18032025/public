@@ -1,0 +1,659 @@
+/* ============================================================
+   GOVERNMENT MCQ - ALL QUIZZES PAGE STYLES
+   Premium, modern listing for GMCQ quizzes
+   Reuses CSS variables from gmcq-homepage.css
+   ============================================================ */
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+.gmcq-q-header {
+    padding: 40px 0 32px;
+    background: linear-gradient(135deg, #0F4C81 0%, #1E88E5 100%);
+    color: var(--gmcq-white);
+    position: relative;
+    overflow: hidden;
+}
+
+.gmcq-q-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.gmcq-q-breadcrumb {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    opacity: 0.8;
+}
+
+.gmcq-q-breadcrumb a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.gmcq-q-breadcrumb a:hover {
+    color: var(--gmcq-white);
+}
+
+.gmcq-q-breadcrumb i {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+}
+
+.gmcq-q-breadcrumb span {
+    color: var(--gmcq-white);
+    font-weight: 600;
+}
+
+.gmcq-q-header .gmcq-section-header {
+    margin-bottom: 24px;
+}
+
+.gmcq-q-header .gmcq-section-badge {
+    background: rgba(255,255,255,0.15);
+    color: var(--gmcq-white);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.gmcq-q-header .gmcq-section-title,
+.gmcq-q-header .gmcq-section-desc {
+    color: var(--gmcq-white);
+}
+
+.gmcq-q-header .gmcq-section-desc {
+    opacity: 0.85;
+}
+
+/* Stats Strip */
+.gmcq-q-stats {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    padding: 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.gmcq-q-stat-item {
+    text-align: center;
+}
+
+.gmcq-q-stat-number {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--gmcq-white);
+}
+
+.gmcq-q-stat-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .gmcq-q-header {
+        padding: 28px 0 24px;
+    }
+    .gmcq-q-stats {
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .gmcq-q-stat-number {
+        font-size: 22px;
+    }
+    .gmcq-q-breadcrumb {
+        font-size: 12px;
+        margin-bottom: 16px;
+    }
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.gmcq-q-filters {
+    padding: 24px 0;
+    background: var(--gmcq-white);
+    border-bottom: 1px solid var(--gmcq-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.gmcq-q-filter-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gmcq-q-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.gmcq-q-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gmcq-text-lighter);
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.gmcq-q-search-input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    font-size: 14px;
+    font-family: var(--gmcq-font);
+    border: 2px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius-sm);
+    background: var(--gmcq-bg);
+    color: var(--gmcq-text);
+    transition: all var(--gmcq-transition);
+    outline: none;
+}
+
+.gmcq-q-search-input:focus {
+    border-color: var(--gmcq-secondary);
+    background: var(--gmcq-white);
+    box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.1);
+}
+
+.gmcq-q-search-input::placeholder {
+    color: var(--gmcq-text-lighter);
+}
+
+.gmcq-q-select-wrap {
+    position: relative;
+    min-width: 170px;
+}
+
+.gmcq-q-select-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gmcq-text-lighter);
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.gmcq-q-select-wrap select {
+    width: 100%;
+    padding: 12px 14px 12px 38px;
+    font-size: 14px;
+    font-family: var(--gmcq-font);
+    border: 2px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius-sm);
+    background: var(--gmcq-bg);
+    color: var(--gmcq-text);
+    transition: all var(--gmcq-transition);
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.gmcq-q-select-wrap select:focus {
+    border-color: var(--gmcq-secondary);
+    background-color: var(--gmcq-white);
+    box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.1);
+}
+
+/* View Toggle Button */
+.gmcq-q-view-toggle {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius-sm);
+    background: var(--gmcq-bg);
+    color: var(--gmcq-text-light);
+    cursor: pointer;
+    transition: all var(--gmcq-transition);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.gmcq-q-view-toggle:hover {
+    border-color: var(--gmcq-secondary);
+    color: var(--gmcq-primary);
+    background: rgba(30, 136, 229, 0.05);
+}
+
+.gmcq-q-view-toggle.gmcq-q-view-list {
+    color: var(--gmcq-primary);
+    border-color: var(--gmcq-primary);
+    background: rgba(15, 76, 129, 0.06);
+}
+
+@media (max-width: 768px) {
+    .gmcq-q-filters {
+        padding: 16px 0;
+        position: relative;
+    }
+    .gmcq-q-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .gmcq-q-search-wrap {
+        min-width: 0;
+    }
+    .gmcq-q-select-wrap {
+        min-width: 0;
+    }
+    .gmcq-q-view-toggle {
+        display: none;
+    }
+}
+
+/* ============================================================
+   QUIZ GRID
+   ============================================================ */
+.gmcq-q-grid-section {
+    padding: 40px 0 60px;
+    background: var(--gmcq-bg);
+}
+
+.gmcq-q-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.gmcq-q-grid.gmcq-q-grid-empty {
+    display: block;
+}
+
+/* ============================================================
+   QUIZ CARD
+   ============================================================ */
+.gmcq-q-card {
+    background: var(--gmcq-white);
+    border-radius: var(--gmcq-radius);
+    padding: 24px;
+    border: 1px solid var(--gmcq-border);
+    transition: all var(--gmcq-transition);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.gmcq-q-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gmcq-primary), var(--gmcq-secondary));
+    opacity: 0;
+    transition: opacity var(--gmcq-transition);
+}
+
+.gmcq-q-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--gmcq-shadow-xl);
+    border-color: transparent;
+}
+
+.gmcq-q-card:hover::before {
+    opacity: 1;
+}
+
+/* Card Top Row */
+.gmcq-q-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.gmcq-q-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gmcq-q-card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 4px 10px;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+.gmcq-q-badge-category {
+    background: rgba(15, 76, 129, 0.08);
+    color: var(--gmcq-primary);
+}
+
+.gmcq-q-badge-category i {
+    font-size: 11px;
+}
+
+.gmcq-q-card-badge.difficulty-easy {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--gmcq-success);
+}
+
+.gmcq-q-card-badge.difficulty-medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--gmcq-warning);
+}
+
+.gmcq-q-card-badge.difficulty-hard {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--gmcq-danger);
+}
+
+.gmcq-q-badge-login {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--gmcq-text-light);
+}
+
+.gmcq-q-card-attempts {
+    font-size: 13px;
+    color: var(--gmcq-text-light);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.gmcq-q-card-attempts i {
+    font-size: 14px;
+}
+
+/* Card Title */
+.gmcq-q-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0 0 14px 0;
+    line-height: 1.35;
+}
+
+.gmcq-q-card-title a {
+    color: var(--gmcq-text);
+    text-decoration: none;
+    transition: color var(--gmcq-transition);
+}
+
+.gmcq-q-card-title a:hover {
+    color: var(--gmcq-primary);
+}
+
+/* Card Meta */
+.gmcq-q-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    margin-top: auto;
+}
+
+.gmcq-q-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--gmcq-text-light);
+    background: var(--gmcq-bg-alt);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.gmcq-q-meta-item i {
+    font-size: 13px;
+    color: var(--gmcq-secondary);
+}
+
+/* Card CTA Button */
+.gmcq-q-card .gmcq-btn {
+    margin-top: auto;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.gmcq-q-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--gmcq-white);
+    border-radius: var(--gmcq-radius);
+    border: 2px dashed var(--gmcq-border);
+}
+
+.gmcq-q-empty i {
+    font-size: 48px;
+    color: var(--gmcq-text-lighter);
+    margin-bottom: 16px;
+}
+
+.gmcq-q-empty h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-q-empty p {
+    font-size: 15px;
+    color: var(--gmcq-text-light);
+    margin: 0;
+}
+
+/* ============================================================
+   LOADING SPINNER
+   ============================================================ */
+.gmcq-q-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px 0;
+    color: var(--gmcq-text-light);
+    font-size: 15px;
+}
+
+.gmcq-q-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--gmcq-border);
+    border-top-color: var(--gmcq-primary);
+    border-radius: 50%;
+    animation: gmcqSpin 0.8s linear infinite;
+}
+
+@keyframes gmcqSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.gmcq-q-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 36px;
+    flex-wrap: wrap;
+}
+
+.gmcq-q-pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius-sm);
+    background: var(--gmcq-white);
+    color: var(--gmcq-text);
+    transition: all var(--gmcq-transition);
+}
+
+.gmcq-q-pagination a:hover {
+    border-color: var(--gmcq-secondary);
+    color: var(--gmcq-primary);
+    background: rgba(30, 136, 229, 0.05);
+}
+
+.gmcq-q-pagination a.active {
+    border-color: var(--gmcq-primary);
+    background: var(--gmcq-primary);
+    color: var(--gmcq-white);
+    box-shadow: 0 4px 12px rgba(15, 76, 129, 0.3);
+}
+
+/* ============================================================
+   LOAD MORE
+   ============================================================ */
+.gmcq-q-loadmore-wrap {
+    text-align: center;
+    margin-top: 32px;
+}
+
+.gmcq-q-loadmore-wrap .gmcq-btn {
+    padding: 14px 48px;
+}
+
+/* ============================================================
+   LIST VIEW
+   ============================================================ */
+.gmcq-q-grid.gmcq-q-list-view {
+    grid-template-columns: 1fr;
+    gap: 0;
+    border: 1px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius);
+    overflow: hidden;
+    background: var(--gmcq-white);
+}
+
+.gmcq-q-list-view .gmcq-q-card {
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--gmcq-border);
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 24px;
+}
+
+.gmcq-q-list-view .gmcq-q-card::before {
+    display: none;
+}
+
+.gmcq-q-list-view .gmcq-q-card:last-child {
+    border-bottom: none;
+}
+
+.gmcq-q-list-view .gmcq-q-card-top {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    min-width: 160px;
+}
+
+.gmcq-q-list-view .gmcq-q-card-title {
+    margin-bottom: 0;
+    flex: 1;
+    font-size: 15px;
+}
+
+.gmcq-q-list-view .gmcq-q-card-meta {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.gmcq-q-list-view .gmcq-q-card .gmcq-btn {
+    width: auto;
+    flex-shrink: 0;
+    padding: 8px 20px;
+    font-size: 13px;
+}
+
+.gmcq-q-list-view .gmcq-q-card-attempts {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .gmcq-q-list-view .gmcq-q-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .gmcq-q-list-view .gmcq-q-card-top {
+        min-width: 0;
+    }
+    .gmcq-q-list-view .gmcq-q-card .gmcq-btn {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+    .gmcq-q-grid-section {
+        padding: 24px 0 40px;
+    }
+    .gmcq-q-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .gmcq-q-card {
+        padding: 20px 18px;
+    }
+    .gmcq-q-card-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    .gmcq-q-card-title {
+        font-size: 15px;
+    }
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS (reuses gmcq-homepage.css classes)
+   ============================================================ */
+.gmcq-q-card.gmcq-animate-fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gmcq-q-card.gmcq-animate-fade-in-up.gmcq-visible {
+    opacity: 1;
+    transform: translateY(0);
+}

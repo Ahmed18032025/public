@@ -125,28 +125,61 @@ get_header();
 					<span><?php esc_html_e( 'Blog', 'astra' ); ?></span>
 				</nav>
 
-				<div class="gmcq-section-header gmcq-animate-fade-in-up">
-					<span class="gmcq-section-badge"><?php esc_html_e( 'Our Blog', 'astra' ); ?></span>
-					<h1 class="gmcq-section-title"><?php esc_html_e( 'Latest Updates & Articles', 'astra' ); ?></h1>
-					<p class="gmcq-section-desc"><?php esc_html_e( 'Stay updated with exam notifications, study tips, and important announcements.', 'astra' ); ?></p>
-				</div>
+				<div class="gmcq-blog-header-content">
+					<div class="gmcq-blog-header-text">
+						<div class="gmcq-section-header gmcq-animate-fade-in-up">
+							<span class="gmcq-section-badge"><?php esc_html_e( 'Our Blog', 'astra' ); ?></span>
+							<h1 class="gmcq-section-title"><?php esc_html_e( 'Latest Updates & Articles', 'astra' ); ?></h1>
+							<p class="gmcq-section-desc"><?php esc_html_e( 'Stay updated with exam notifications, study tips, and important announcements.', 'astra' ); ?></p>
+						</div>
 
-				<div class="gmcq-blog-stats gmcq-animate-fade-in-up">
-					<div class="gmcq-blog-stat-item">
-						<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_total ) ); ?></span>
-						<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Articles', 'astra' ); ?></span>
+						<div class="gmcq-blog-stats gmcq-animate-fade-in-up">
+							<div class="gmcq-blog-stat-item">
+								<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_total ) ); ?></span>
+								<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Articles', 'astra' ); ?></span>
+							</div>
+							<div class="gmcq-blog-stat-item">
+								<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_cats ) ); ?></span>
+								<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
+							</div>
+							<div class="gmcq-blog-stat-item">
+								<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_tags ) ); ?></span>
+								<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Tags', 'astra' ); ?></span>
+							</div>
+							<div class="gmcq-blog-stat-item">
+								<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_author_count ) ); ?></span>
+								<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Authors', 'astra' ); ?></span>
+							</div>
+						</div>
 					</div>
-					<div class="gmcq-blog-stat-item">
-						<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_cats ) ); ?></span>
-						<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
-					</div>
-					<div class="gmcq-blog-stat-item">
-						<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_tags ) ); ?></span>
-						<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Tags', 'astra' ); ?></span>
-					</div>
-					<div class="gmcq-blog-stat-item">
-						<span class="gmcq-blog-stat-number"><?php echo esc_html( number_format( $blog_author_count ) ); ?></span>
-						<span class="gmcq-blog-stat-label"><?php esc_html_e( 'Authors', 'astra' ); ?></span>
+
+					<div class="gmcq-hero-visual gmcq-animate-fade-in-right">
+						<div class="gmcq-hero-illustration">
+							<div class="gmcq-illustration-card gmcq-illustration-card-1">
+								<i class="fas fa-newspaper" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $blog_total ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Published Articles', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-illustration-card gmcq-illustration-card-2">
+								<i class="fas fa-folder-open" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $blog_cats ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-illustration-card gmcq-illustration-card-3">
+								<i class="fas fa-users" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $blog_author_count ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Authors', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-hero-main-illustration">
+								<i class="fas fa-book-open" aria-hidden="true"></i>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

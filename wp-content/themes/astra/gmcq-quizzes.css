@@ -23,6 +23,39 @@
     pointer-events: none;
 }
 
+.gmcq-q-header-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.gmcq-q-header-text {
+    text-align: left;
+}
+
+.gmcq-q-header .gmcq-hero-visual {
+    position: relative;
+}
+
+@media (max-width: 1024px) {
+    .gmcq-q-header-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .gmcq-q-header-text {
+        text-align: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .gmcq-q-header {
+        padding: 28px 0 24px;
+    }
+}
+
 .gmcq-q-breadcrumb {
     font-size: 13px;
     display: flex;

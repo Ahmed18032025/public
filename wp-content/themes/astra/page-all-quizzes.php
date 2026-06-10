@@ -433,24 +433,57 @@ get_header();
 					<span><?php esc_html_e( 'All Quizzes', 'astra' ); ?></span>
 				</nav>
 
-				<div class="gmcq-section-header gmcq-animate-fade-in-up">
-					<span class="gmcq-section-badge"><?php esc_html_e( 'Practice Tests', 'astra' ); ?></span>
-					<h1 class="gmcq-section-title"><?php esc_html_e( 'All Quizzes', 'astra' ); ?></h1>
-					<p class="gmcq-section-desc"><?php esc_html_e( 'Browse all available mock tests and practice quizzes. Filter by category or search by name.', 'astra' ); ?></p>
-				</div>
+				<div class="gmcq-q-header-content">
+					<div class="gmcq-q-header-text">
+						<div class="gmcq-section-header gmcq-animate-fade-in-up">
+							<span class="gmcq-section-badge"><?php esc_html_e( 'Practice Tests', 'astra' ); ?></span>
+							<h1 class="gmcq-section-title"><?php esc_html_e( 'All Quizzes', 'astra' ); ?></h1>
+							<p class="gmcq-section-desc"><?php esc_html_e( 'Browse all available mock tests and practice quizzes. Filter by category or search by name.', 'astra' ); ?></p>
+						</div>
 
-				<div class="gmcq-q-stats gmcq-animate-fade-in-up">
-					<div class="gmcq-q-stat-item">
-						<span class="gmcq-q-stat-number" id="gmcq-q-total"><?php echo esc_html( number_format( $stats['total_quizzes'] ) ); ?></span>
-						<span class="gmcq-q-stat-label"><?php esc_html_e( 'Total Quizzes', 'astra' ); ?></span>
+						<div class="gmcq-q-stats gmcq-animate-fade-in-up">
+							<div class="gmcq-q-stat-item">
+								<span class="gmcq-q-stat-number" id="gmcq-q-total"><?php echo esc_html( number_format( $stats['total_quizzes'] ) ); ?></span>
+								<span class="gmcq-q-stat-label"><?php esc_html_e( 'Total Quizzes', 'astra' ); ?></span>
+							</div>
+							<div class="gmcq-q-stat-item">
+								<span class="gmcq-q-stat-number"><?php echo esc_html( number_format( $stats['total_questions'] ) ); ?></span>
+								<span class="gmcq-q-stat-label"><?php esc_html_e( 'Total Questions', 'astra' ); ?></span>
+							</div>
+							<div class="gmcq-q-stat-item">
+								<span class="gmcq-q-stat-number"><?php echo esc_html( number_format( $stats['total_categories'] ) ); ?></span>
+								<span class="gmcq-q-stat-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
+							</div>
+						</div>
 					</div>
-					<div class="gmcq-q-stat-item">
-						<span class="gmcq-q-stat-number"><?php echo esc_html( number_format( $stats['total_questions'] ) ); ?></span>
-						<span class="gmcq-q-stat-label"><?php esc_html_e( 'Total Questions', 'astra' ); ?></span>
-					</div>
-					<div class="gmcq-q-stat-item">
-						<span class="gmcq-q-stat-number"><?php echo esc_html( number_format( $stats['total_categories'] ) ); ?></span>
-						<span class="gmcq-q-stat-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
+
+					<div class="gmcq-hero-visual gmcq-animate-fade-in-right">
+						<div class="gmcq-hero-illustration">
+							<div class="gmcq-illustration-card gmcq-illustration-card-1">
+								<i class="fas fa-graduation-cap" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $stats['total_questions'] ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Practice Questions', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-illustration-card gmcq-illustration-card-2">
+								<i class="fas fa-trophy" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $stats['total_quizzes'] ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Mock Tests', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-illustration-card gmcq-illustration-card-3">
+								<i class="fas fa-layer-group" aria-hidden="true"></i>
+								<div class="gmcq-ill-card-content">
+									<span class="gmcq-ill-card-number"><?php echo esc_html( number_format( $stats['total_categories'] ) ); ?>+</span>
+									<span class="gmcq-ill-card-label"><?php esc_html_e( 'Categories', 'astra' ); ?></span>
+								</div>
+							</div>
+							<div class="gmcq-hero-main-illustration">
+								<i class="fas fa-clipboard-list" aria-hidden="true"></i>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -23,6 +23,39 @@
     pointer-events: none;
 }
 
+.gmcq-blog-header-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.gmcq-blog-header-text {
+    text-align: left;
+}
+
+.gmcq-blog-header .gmcq-hero-visual {
+    position: relative;
+}
+
+@media (max-width: 1024px) {
+    .gmcq-blog-header-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .gmcq-blog-header-text {
+        text-align: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .gmcq-blog-header {
+        padding: 28px 0 24px;
+    }
+}
+
 .gmcq-blog-breadcrumb {
     font-size: 13px;
     display: flex;

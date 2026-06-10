@@ -1,0 +1,505 @@
+/* ============================================================
+   GOVERNMENT MCQ - CONTACT PAGE STYLES
+   Premium contact form, info cards, FAQ accordion.
+   Reuses CSS variables from gmcq-homepage.css.
+   ============================================================ */
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.gmcq-contact-header {
+    padding: 40px 0 32px;
+    background: linear-gradient(135deg, #0F4C81 0%, #1E88E5 100%);
+    color: var(--gmcq-white);
+    position: relative;
+    overflow: hidden;
+}
+
+.gmcq-contact-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.07) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.gmcq-contact-breadcrumb {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    opacity: 0.8;
+}
+
+.gmcq-contact-breadcrumb a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.gmcq-contact-breadcrumb a:hover { color: var(--gmcq-white); }
+.gmcq-contact-breadcrumb i { font-size: 10px; color: rgba(255,255,255,0.5); }
+.gmcq-contact-breadcrumb span { color: var(--gmcq-white); font-weight: 600; }
+
+.gmcq-contact-header .gmcq-section-header { margin-bottom: 0; }
+.gmcq-contact-header .gmcq-section-badge {
+    background: rgba(255,255,255,0.15);
+    color: var(--gmcq-white);
+    border-color: rgba(255,255,255,0.2);
+}
+.gmcq-contact-header .gmcq-section-title,
+.gmcq-contact-header .gmcq-section-desc { color: var(--gmcq-white); }
+.gmcq-contact-header .gmcq-section-desc { opacity: 0.85; }
+
+@media (max-width: 768px) {
+    .gmcq-contact-header { padding: 28px 0 24px; }
+    .gmcq-contact-breadcrumb { font-size: 12px; margin-bottom: 16px; }
+}
+
+/* ============================================================
+   CONTENT LAYOUT
+   ============================================================ */
+.gmcq-contact-content {
+    padding: 48px 0 60px;
+    background: var(--gmcq-bg);
+}
+
+.gmcq-contact-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .gmcq-contact-layout { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+.gmcq-contact-form-card {
+    background: var(--gmcq-white);
+    border-radius: var(--gmcq-radius);
+    padding: 40px;
+    border: 1px solid var(--gmcq-border);
+    box-shadow: var(--gmcq-shadow-sm);
+}
+
+.gmcq-contact-form-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 28px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gmcq-form-row {
+    display: grid;
+    gap: 20px;
+}
+
+.gmcq-form-row-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+    .gmcq-form-row-2 { grid-template-columns: 1fr; }
+    .gmcq-contact-form-card { padding: 24px 20px; }
+}
+
+.gmcq-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gmcq-form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gmcq-text);
+}
+
+.gmcq-required { color: var(--gmcq-danger); }
+.gmcq-optional { color: var(--gmcq-text-lighter); font-weight: 400; font-size: 12px; }
+
+.gmcq-form-input,
+.gmcq-form-select,
+.gmcq-form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-family: var(--gmcq-font);
+    border: 2px solid var(--gmcq-border);
+    border-radius: var(--gmcq-radius-sm);
+    background: var(--gmcq-bg);
+    color: var(--gmcq-text);
+    transition: all var(--gmcq-transition);
+    outline: none;
+}
+
+.gmcq-form-input:focus,
+.gmcq-form-select:focus,
+.gmcq-form-textarea:focus {
+    border-color: var(--gmcq-secondary);
+    background: var(--gmcq-white);
+    box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.1);
+}
+
+.gmcq-form-input.error,
+.gmcq-form-select.error,
+.gmcq-form-textarea.error {
+    border-color: var(--gmcq-danger);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.gmcq-form-input::placeholder,
+.gmcq-form-textarea::placeholder { color: var(--gmcq-text-lighter); }
+
+.gmcq-form-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+}
+
+.gmcq-form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.gmcq-form-textarea-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.gmcq-form-error {
+    font-size: 13px;
+    color: var(--gmcq-danger);
+    min-height: 18px;
+}
+
+.gmcq-form-counter {
+    font-size: 12px;
+    color: var(--gmcq-text-lighter);
+    flex-shrink: 0;
+}
+
+.gmcq-form-counter.warning { color: var(--gmcq-warning); }
+.gmcq-form-counter.danger { color: var(--gmcq-danger); }
+
+/* Submit Button */
+#gmcq-contact-submit {
+    position: relative;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.gmcq-btn-spinner {
+    display: inline-flex;
+    align-items: center;
+}
+
+.gmcq-spinner-sm {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: var(--gmcq-white);
+    border-radius: 50%;
+    animation: gmcqSpinBtn 0.6s linear infinite;
+}
+
+@keyframes gmcqSpinBtn {
+    to { transform: rotate(360deg); }
+}
+
+/* Success State */
+.gmcq-contact-success {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.gmcq-success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gmcq-success), #34D399);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: gmcqSuccessPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.gmcq-success-icon i {
+    font-size: 36px;
+    color: var(--gmcq-white);
+}
+
+@keyframes gmcqSuccessPop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.gmcq-contact-success h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-contact-success p {
+    font-size: 15px;
+    color: var(--gmcq-text-light);
+    margin: 0 0 24px 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ============================================================
+   CONTACT INFO
+   ============================================================ */
+.gmcq-contact-info-card {
+    background: var(--gmcq-white);
+    border-radius: var(--gmcq-radius);
+    padding: 32px;
+    border: 1px solid var(--gmcq-border);
+    box-shadow: var(--gmcq-shadow-sm);
+}
+
+.gmcq-contact-info-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-contact-info-desc {
+    font-size: 14px;
+    color: var(--gmcq-text-light);
+    margin: 0 0 24px 0;
+}
+
+.gmcq-contact-info-items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gmcq-contact-info-item {
+    display: flex;
+    gap: 16px;
+}
+
+.gmcq-contact-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(15, 76, 129, 0.08), rgba(30, 136, 229, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.gmcq-contact-info-icon i {
+    font-size: 20px;
+    color: var(--gmcq-primary);
+}
+
+.gmcq-contact-info-content h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-contact-info-content p {
+    font-size: 14px;
+    color: var(--gmcq-text-light);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.gmcq-contact-info-content a {
+    color: var(--gmcq-primary);
+    text-decoration: none;
+    transition: color var(--gmcq-transition);
+}
+
+.gmcq-contact-info-content a:hover {
+    color: var(--gmcq-secondary);
+}
+
+/* Social Links */
+.gmcq-contact-social {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--gmcq-border);
+}
+
+.gmcq-contact-social h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 14px 0;
+    color: var(--gmcq-text);
+}
+
+.gmcq-contact-social-icons {
+    display: flex;
+    gap: 10px;
+}
+
+.gmcq-social-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    text-decoration: none;
+    transition: all var(--gmcq-transition);
+}
+
+.gmcq-social-icon.facebook { background: #1877F2; color: white; }
+.gmcq-social-icon.twitter { background: #1DA1F2; color: white; }
+.gmcq-social-icon.youtube { background: #FF0000; color: white; }
+.gmcq-social-icon.instagram { background: #E4405F; color: white; }
+.gmcq-social-icon.linkedin { background: #0A66C2; color: white; }
+
+.gmcq-social-icon:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* Map */
+.gmcq-contact-map {
+    margin-top: 20px;
+    overflow: hidden;
+    border-radius: var(--gmcq-radius);
+    box-shadow: var(--gmcq-shadow-sm);
+}
+
+.gmcq-contact-map iframe {
+    display: block;
+}
+
+/* ============================================================
+   FAQ ACCORDION
+   ============================================================ */
+.gmcq-contact-faq {
+    padding: 0 0 60px;
+    background: var(--gmcq-bg);
+}
+
+.gmcq-faq-list {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gmcq-faq-item {
+    background: var(--gmcq-white);
+    border-radius: var(--gmcq-radius-sm);
+    border: 1px solid var(--gmcq-border);
+    overflow: hidden;
+    transition: all var(--gmcq-transition);
+}
+
+.gmcq-faq-item:hover {
+    border-color: var(--gmcq-secondary);
+}
+
+.gmcq-faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--gmcq-font);
+    color: var(--gmcq-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: color var(--gmcq-transition);
+}
+
+.gmcq-faq-question:hover {
+    color: var(--gmcq-primary);
+}
+
+.gmcq-faq-question i {
+    font-size: 14px;
+    color: var(--gmcq-text-lighter);
+    transition: transform var(--gmcq-transition);
+    flex-shrink: 0;
+}
+
+.gmcq-faq-question[aria-expanded="true"] i {
+    transform: rotate(180deg);
+    color: var(--gmcq-primary);
+}
+
+.gmcq-faq-answer {
+    padding: 0 24px 18px;
+}
+
+.gmcq-faq-answer p {
+    font-size: 14px;
+    color: var(--gmcq-text-light);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+    .gmcq-contact-content { padding: 24px 0 40px; }
+    .gmcq-contact-form-card { padding: 24px 18px; }
+    .gmcq-contact-info-card { padding: 24px 18px; }
+    .gmcq-faq-question { padding: 14px 18px; font-size: 14px; }
+    .gmcq-faq-answer { padding: 0 18px 14px; }
+}
+
+@media (max-width: 480px) {
+    .gmcq-contact-info-item { flex-direction: column; }
+    .gmcq-contact-social-icons { flex-wrap: wrap; }
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.gmcq-contact-form-wrap.gmcq-animate-fade-in-up,
+.gmcq-contact-info-wrap.gmcq-animate-fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gmcq-contact-form-wrap.gmcq-visible,
+.gmcq-contact-info-wrap.gmcq-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
